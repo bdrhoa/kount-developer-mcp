@@ -1,0 +1,16 @@
+{
+  "merchantOrderId": "synthetic-example-001",
+  "deviceSessionId": "synthetic-session-000000000001",
+  "items": [
+    {
+      "id": "synthetic-item-001",
+      "name": "Synthetic purchase",
+      "price": "1000",
+      "quantity": 1,
+      "isDigital": false
+    }
+  ],
+  "transactions": [
+    { "payment": { "type": "NONE" }, "subtotal": "1000", "orderTotal": "1000", "currency": "USD" }
+  ]
+}

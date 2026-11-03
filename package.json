@@ -1,0 +1,64 @@
+{
+  "name": "kount-developer-mcp",
+  "version": "0.1.0",
+  "description": "Unofficial local MCP tools for integrating Kount Payments Fraud v2",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=26.13.0 <27"
+  },
+  "bin": {
+    "kount-developer-mcp": "dist/index.js"
+  },
+  "exports": {
+    ".": "./dist/server.js"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "README.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "docs/SOURCES.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "schema:fetch": "tsx src/index.ts --fetch-schema",
+    "test": "vitest run",
+    "test:contract": "vitest run tests/contract.test.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "kount",
+    "payments",
+    "fraud",
+    "developer-tools"
+  ],
+  "overrides": {
+    "minimatch": "11.0.4"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.4.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  }
+}

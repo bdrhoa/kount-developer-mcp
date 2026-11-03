@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "kount-developer": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/absolute/path/to/kount-developer-mcp/dist/index.js"],
+      "env": {
+        "KOUNT_CLIENT_ID": "${KOUNT_CLIENT_ID:-}",
+        "KOUNT_API_KEY": "${KOUNT_API_KEY:-}"
+      }
+    }
+  }
+}

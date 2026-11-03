@@ -1,0 +1,7 @@
+# Merge into ~/.codex/config.toml (or trusted project .codex/config.toml).
+# Replace the path with the absolute path to your built checkout or installed package.
+[mcp_servers.kount_developer]
+command = "node"
+args = ["/absolute/path/to/kount-developer-mcp/dist/index.js"]
+# Forward variables set in the process launching Codex. Values are not stored here.
+env_vars = ["KOUNT_CLIENT_ID", "KOUNT_API_KEY"]

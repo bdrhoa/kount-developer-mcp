@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+.cache
+package-lock.json
+LICENSE
+HANDOFF.md
+AGENTS.md
+CLAUDE.md
+.agents
+.claude
+docs/HANDOFF_WORKFLOW.md
