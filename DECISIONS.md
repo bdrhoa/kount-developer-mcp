@@ -75,3 +75,30 @@ with a link to their replacement.
   without a separate request.
 - **Decision:** Build, test and package locally; do not commit, push or publish.
 - **Reason:** Leave a concrete implementation and verification record for review.
+
+## D006 — Guide and verify the merchant integration lifecycle
+
+- **Date:** 2026-11-11
+- **Status:** Accepted direction for future MCP guidance and readiness checks
+- **Authority:** Brad’s follow-up to the OpenShop first-use evaluation.
+- **Decision:** Use k360pf as a reference for webhook processors, JWT caching
+  and refresh, bounded retries, and the pre-authorization PATCH sequence.
+  Prefer pre-authorization where the checkout flow permits it to help protect
+  against card testing. Document OpenShop’s hosted Stripe Checkout as a
+  post-authorization flow. Verify DDC runs on eligible storefront entry paths
+  that lead directly to hosted checkout and creates a new ID for each browser
+  session. For captured orders held in REVIEW, a human decline requires a
+  refund through the payment provider.
+- **Reason:** Readiness should cover the application behavior that connects
+  fraud decisions to payment and fulfillment outcomes.
+
+## D007 — Prioritize maintainer-confirmed integration guidance
+
+- **Date:** 2026-11-11
+- **Status:** Accepted
+- **Authority:** Brad directed the MCP to prioritize his integration guidance
+  when the official documentation conflicts and reported a successful Stripe
+  refund in his OpenShop test.
+- **Decision:** Apply maintainer-confirmed guidance within its integration and
+  environment. Surface disagreements and preserve the raw published schema.
+  Present the OpenShop refund as a maintainer-reported outcome for that test.

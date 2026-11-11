@@ -66,6 +66,20 @@ describe('missing and untrusted schemas', () => {
 
 describe('error explanation', () => {
   const validation = new ValidationService(new SchemaService(join(temporary, 'missing.json')));
+  it('diagnoses token rejection without validating an order or echoing the response', () => {
+    const result = explainApiError(
+      {
+        operation: 'token',
+        httpStatus: 400,
+        responseBody: { message: 'synthetic-secret-marker' },
+        requestPayload: { merchantOrderId: 'synthetic-order' },
+      },
+      validation,
+    );
+    expect(result.steps.join(' ')).toContain('duplicated Basic prefix');
+    expect(result).not.toHaveProperty('payloadValidation');
+    expect(JSON.stringify(result)).not.toContain('synthetic-secret-marker');
+  });
   it.each([400, 401, 403, 404, 409, 429, 500, 503])(
     'grounds status %s in documentation',
     (httpStatus) => {

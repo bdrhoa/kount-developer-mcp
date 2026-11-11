@@ -164,6 +164,10 @@ configured or exercised by this build.
 | `check_integration_readiness` | `capabilities`, optional non-sensitive `configuration`  | Caller-reported passed/failed checks, observed credential/authentication state, manual verification and references |
 | `authenticate_sandbox`        | `{}`                                                    | **Network-enabled:** obtains/caches a Sandbox token from local credentials; returns status and expiry only         |
 
+`explain_api_error` accepts an optional `operation` for token and Commerce
+diagnostics. Use `token` for token acquisition failures or one of the schema
+operation names below. Payload validation applies to Evaluate Order requests.
+
 Topics: `authentication`, `device_data_collection`, `order_evaluation`,
 `authorization_updates`, `webhooks`, `overview`.
 
@@ -183,6 +187,12 @@ Readiness capability names: `authentication`, `token_lifecycle`,
 Optional configuration accepts `environment: "sandbox"`, `authorizationFlow:
 "pre" | "post"`, `webhooksEnabled: boolean`, and `deviceCollection: "enabled" |
 "excluded"`. No credential fields are accepted.
+
+Optional `evidence` maps reported capabilities to `source_reviewed`,
+`mock_tested`, or `sandbox_observed`. Readiness returns additional checks for the
+declared authorization flow, DDC, and webhooks. The guide prioritizes
+maintainer-confirmed guidance within its stated scope and surfaces conflicts
+with vendor documentation.
 
 Example prompts:
 

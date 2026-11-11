@@ -4,6 +4,109 @@ Read the newest entry first, then `DECISIONS.md` and `README.md`. Prepend new
 entries below this introduction; preserve earlier notes. Use
 `docs/HANDOFF_WORKFLOW.md` for the checkpoint procedure.
 
+## 2026-11-11 13:38 UTC-07:00 — Codex — OpenShop guidance in MCP tools
+
+- Implemented D006 guidance in the existing MCP tools at Brad’s request and
+  recorded D007. Maintainer-confirmed guidance takes precedence within its
+  integration scope. Conflicts remain visible and raw schemas remain intact.
+- The guide now covers authorization timing, DDC entry paths and new browser
+  sessions, webhook examples, JWT reuse and refresh, bounded retries, and
+  settlement and reversal feedback. It reports Brad’s successful Stripe
+  refund as evidence from his OpenShop test.
+- Readiness accepts optional caller-reported evidence levels and gives
+  configuration-specific checks. Error explanations accept an optional
+  operation and distinguish token failures from Orders errors.
+- Build, typecheck, lint, formatting, and whitespace checks passed. All
+  75 tests passed on the project’s Node 26.13.0. A compiled stdio smoke test
+  confirmed guide, readiness, token diagnostics, and Sandbox PATCH URL outputs.
+- No live payment calls were made. The successful Stripe refund is Brad’s
+  observation. Independent Kount reporting for that refund remains unverified.
+- Work is local on `master` with the earlier review edits and the new source,
+  test, and documentation changes. Restart any MCP client using this built
+  checkout to load the updated tools.
+
+## 2026-11-11 13:29 UTC-07:00 — Codex — Sandbox request URLs
+
+- Clarified the distinction between Commerce documentation pages, production
+  request examples, and Sandbox request URLs in the source notes and review.
+- Confirmed the Sandbox host against the existing MCP configuration. Formatting
+  and whitespace checks cover the documentation changes. Continue from D006
+  when implementing guide and readiness updates.
+
+## 2026-11-11 13:27 UTC-07:00 — Codex — Commerce operation references
+
+- Added Brad’s Evaluate Order POST and Update Order PATCH references to the
+  OpenShop review and paired them with Sandbox links and MCP schema keys in
+  `docs/SOURCES.md`.
+- Read both published OpenAPI documents. Their SHA-256 fingerprints match the
+  pinned manifest and both operation IDs match the configured methods and paths.
+- Documentation checks only. Next, use these references when implementing
+  the D006 guidance and validating lifecycle examples.
+
+## 2026-11-11 13:18 UTC-07:00 — Codex — OpenShop review corrections
+
+- Updated `docs/OPENSHOP_POC_REVIEW.md` for Brad’s clarifications on hosted
+  checkout, pre-authorization preference, DDC placement and fresh session IDs,
+  and refund handling after reviewer decline. Recorded the direction in D006.
+- Inspected k360pf at `58300d413072dfcf03ea13628b4500a8dd8e24e6`.
+  Pinned references cover a sample status event, multilingual receivers, JWT
+  caching, retries, and the simulated pre-authorization PATCH.
+- The example supports the field names OpenShop uses. Current Sandbox Order
+  Update payload coverage and post-authorization reversal mapping remain open.
+- Existing checkout state is `master` tracking `origin/master`. Working changes
+  are the review, decisions, and handoff. This follow-up revised documentation.
+- Verification was source inspection, Markdown formatting, and whitespace
+  checks. No demo or live integration tests were run.
+- Next, use the revised acceptance criteria when implementing the MCP guide
+  and readiness changes.
+
+## 2026-11-06 10:10 UTC-07:00 — Codex — OpenShop first-use evaluation
+
+### Current state
+- Brad requested evaluation of `/Users/brad/Downloads/poc1.md` and the public
+  OpenShop fork for useful MCP improvements. Review only; no runtime changes.
+- Actual checkout is clean at the start on `master`, tracking `origin/master`,
+  with initial commit `0b9e810`. Earlier no-commit/no-remote notes are stale.
+- OpenShop integration reviewed on `poc/kount-run-110301` at
+  `55926c66fae9bb1dcb06fe0b87304ab5d0b72778`; `main` lacks this integration.
+
+### Completed
+- Added `docs/OPENSHOP_POC_REVIEW.md` with evidence limits, prioritized proposals,
+  acceptance criteria, pinned source links, and suggested implementation order.
+- Compared transcript, POC code/tests/docs, current MCP guides/tools, and the
+  official webhook article. Historical transcript instructions were not acted on.
+- Main proposals: explicit webhook body contract gaps, separate risk/payment/
+  fulfillment states, evidence-specific readiness, a verified DDC recipe,
+  operation-aware auth troubleshooting, and payment/reversal feedback examples.
+- Preserved existing accepted decisions. No commit, push, publication, payment,
+  deployment, or live authenticated request was performed.
+
+### Verification
+- Passed two isolated Node assertion checks against POC modules with synthetic
+  service doubles: concurrent checkout deliveries both evaluate; a failed refund
+  can leave the derived order status as refunded before the charge is refunded.
+- No network requests in these checks. They demonstrate local control flow,
+  not a verified live incident or all possible race outcomes.
+- GitHub connector returned an unknown-tool error; public Firecrawl retrieval
+  and a temporary shallow clone provided source evidence instead.
+- Full application suites and browser/live payment/DDC/webhook tests unrun;
+  documentation-only MCP changes do not require application tests.
+
+### Decisions and open questions
+- All recommendations remain proposals. D004 still limits authenticated MCP
+  operations to Sandbox token acquisition; no scope expansion was accepted.
+- Exact webhook body fields, reviewer-state lookup semantics, session ID reuse,
+  and Stripe-fingerprint payment-token suitability need vendor confirmation.
+- The supplied transcript lacks a complete tool-call trace, so it cannot prove
+  which tool outputs caused any particular assistant choice.
+
+### Next steps
+1. Read the review and select implementation scope if Brad requests changes.
+2. Start with existing guide content and readiness/error-tool improvements;
+   verify vendor contracts before generating new event/payment fixtures.
+3. Treat the two OpenShop failure cases as integration lessons, not authorization
+   to modify or deploy OpenShop. Working changes here are the review and this log.
+
 ## 2026-11-03 11:29 UTC-07:00 — Codex — Initial developer MCP milestone
 
 ### Current state

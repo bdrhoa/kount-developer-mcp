@@ -13,6 +13,7 @@ export type Source = {
   verifiedAt: string;
   documentDate?: string;
   apiVersion: string;
+  kind?: 'reference_example';
 };
 export const sources: Record<string, Source> = {
   integration: {
@@ -42,6 +43,36 @@ export const sources: Record<string, Source> = {
     verifiedAt: '2026-11-03',
     apiVersion: '2.0.0',
   },
+  referenceWebhook: {
+    id: 'referenceWebhook',
+    url: 'https://github.com/bdrhoa/k360pf/blob/58300d413072dfcf03ea13628b4500a8dd8e24e6/python/payments/webhook/webhook_server.py#L15-L29',
+    verifiedAt: '2026-11-11',
+    apiVersion: '2.0.0',
+    kind: 'reference_example',
+  },
+  referenceToken: {
+    id: 'referenceToken',
+    url: 'https://github.com/bdrhoa/k360pf/blob/58300d413072dfcf03ea13628b4500a8dd8e24e6/typescript/jwt_auth/src/token-manager.ts#L35-L73',
+    verifiedAt: '2026-11-11',
+    apiVersion: '2.0.0',
+    kind: 'reference_example',
+  },
+  referencePayment: {
+    id: 'referencePayment',
+    url: 'https://github.com/bdrhoa/k360pf/blob/58300d413072dfcf03ea13628b4500a8dd8e24e6/typescript/payments/api/server.ts#L109-L172',
+    verifiedAt: '2026-11-11',
+    apiVersion: '2.0.0',
+    kind: 'reference_example',
+  },
+};
+export const guidancePrecedence =
+  'Follow maintainer-confirmed guidance for the integration and environment it covers when vendor prose disagrees. Surface the discrepancy and keep the raw published schema unchanged.';
+export const openShopRefundEvidence = {
+  integration: 'OpenShop hosted Stripe Checkout',
+  source: 'maintainer_reported',
+  reportedAt: '2026-11-11',
+  outcome:
+    'The maintainer tested a captured REVIEW order and confirmed that the Stripe refund processed after reviewer decline.',
 };
 export type Guidance = { requirements: string[]; recommendations: string[]; sourceIds: string[] };
 export const guidance: Record<Topic, Guidance> = {
@@ -59,10 +90,11 @@ export const guidance: Record<Topic, Guidance> = {
       'Provision Sandbox keys using an organization Owner account and store them securely.',
     ],
     recommendations: [
-      'Cache tokens using expires_in and refresh before expiry. The older embedded OAuth URL is retained only as a documented source discrepancy.',
+      'In the merchant application, cache the JWT using expires_in, reuse it until shortly before expiry, and coordinate concurrent refreshes. Verify cache reuse, early refresh, and refresh failure recovery.',
+      'Send the portal Sandbox API key directly as the value after Basic in the token Authorization header. Check for duplicated Basic prefixes, quotes, or embedded whitespace locally. The MCP process and deployed application may have different credentials.',
       'Set KOUNT_CLIENT_ID and KOUNT_API_KEY locally and restart the MCP server. Never paste secrets into chat or tool arguments. Invoke authenticate_sandbox to request a token; check_integration_readiness reports presence and cached authentication status without making a request.',
     ],
-    sourceIds: ['integration', 'commerce'],
+    sourceIds: ['integration', 'commerce', 'referenceToken'],
   },
   device_data_collection: {
     requirements: [
@@ -70,6 +102,8 @@ export const guidance: Record<Topic, Guidance> = {
     ],
     recommendations: [
       'Check order.riskInquiry[0].device.id when testing collection.',
+      'Maintainer guidance: create a fresh DDC ID for each new browser session. Keep it through navigation and checkout handoff within that session. Test browser session restoration and confirm any reuse across separate risk inquiries.',
+      'Checkout-only collection can work when the merchant controls that page and all buyers reach it before payment. With direct links to hosted Stripe Checkout, as in OpenShop, start DDC on every eligible storefront entry, including deep links. Test SDK loading, CSP, redirects, and device attachment on the evaluated order.',
       'The guide documents excludeDevice=true when collection cannot represent the actual end user, such as a call-center or kiosk flow.',
     ],
     sourceIds: ['integration', 'commerce'],
@@ -80,20 +114,24 @@ export const guidance: Record<Topic, Guidance> = {
       'Use query riskInquiry=true to request evaluation; the guide says omitted/false submits data without a risk inquiry.',
     ],
     recommendations: [
+      'Maintainer guidance: prefer pre-authorization risk evaluation when the checkout flow permits it to help protect against card testing. Call Kount before requesting card authorization. For OpenShop hosted Stripe Checkout, evaluate after authorization and before capture because the merchant lacks a pre-authorization hook in that flow.',
+      'Use bounded backoff for transient failures and honor rate limits. Reconcile uncertain outcomes before retrying writes. Test simultaneous duplicate deliveries and timeouts after the provider has accepted a request. Keep failures separate from fraud approvals.',
       'Supply relevant known order data. Monetary strings such as orderTotal use the lowest currency denomination.',
       'Include postalCode and countryCode when supplying addresses, following the guide’s accuracy advice.',
     ],
-    sourceIds: ['integration', 'commerce'],
+    sourceIds: ['integration', 'commerce', 'referencePayment'],
   },
   authorization_updates: {
     requirements: [
       'Use PATCH /commerce/v2/orders/{orderId} for later order details; updates do not perform another risk inquiry.',
-      'In a pre-authorization flow, report the subsequent authorization result and verification responses. Use PATCH /commerce/v2/orders:batchUpdateReversals for later refund/chargeback feedback.',
+      'In a pre-authorization flow, report the subsequent authorization result and verification responses. The Update Order schema also includes transaction status and reversal fields. The Commerce API provides a separate batch reversal operation.',
     ],
     recommendations: [
       'Retain the returned order identifier and test the selected payment lifecycle with Kount. Confirm identifier spelling and decision vocabulary where the guide conflicts with the schema.',
+      'In a post-authorization flow, send the known authorization outcome with the initial evaluation. For an uncaptured REVIEW order declined by a reviewer, cancel or release the authorization. For an already captured REVIEW order, issue a refund through the payment provider. Keep fulfillment blocked and record a refund as complete only after provider confirmation.',
+      'Verify the applicable Kount update or reversal reporting separately from the payment-provider action. The k360pf PATCH demo illustrates the pre-authorization sequence using simulated data.',
     ],
-    sourceIds: ['integration', 'commerce'],
+    sourceIds: ['integration', 'commerce', 'referencePayment'],
   },
   webhooks: {
     requirements: [
@@ -103,8 +141,10 @@ export const guidance: Record<Topic, Guidance> = {
     recommendations: [
       'The guide recommends a 45-minute timestamp window to accommodate retries; review this policy for your integration.',
       'Use Order Update; the guide marks Order Status Change deprecated.',
+      'The k360pf status event example uses eventType Order.StatusChange, fieldName status, kountOrderId, merchantOrderId, and newValue. Use the sample for a fixture and verify the relevant payload shape with a current Sandbox delivery.',
+      'Verify signature, timestamp, duplicate handling, order correlation, and resulting payment and fulfillment changes independently. An HTTP 200 shows acknowledgment. Confirm the provider outcome for the same order.',
     ],
-    sourceIds: ['webhooks'],
+    sourceIds: ['webhooks', 'referenceWebhook'],
   },
 };
 export type DocumentationIssue = {
@@ -130,6 +170,14 @@ export const documentationIssues: DocumentationIssue[] = [
       'Some integration-guide code tabs append /v1/token to an issuer already ending in /as/token, and examples include another product’s /login operation. The user-confirmed Sandbox endpoint is used exactly, with the documented client_credentials grant, k1_integration_api scope, and Basic portal API key. No /login call or separate clientId token parameter is inferred.',
     sourceIds: ['integration'],
     resolution: 'sandbox_endpoint_selected',
+  },
+  {
+    id: 'device-session-reuse',
+    topics: ['device_data_collection', 'order_evaluation'],
+    detail:
+      'The integration guide calls for uniqueness for at least 30 days. The Commerce schema describes an end-user session ID and does not enforce uniqueness. Maintainer guidance calls for a fresh ID per browser session. Confirm reuse across separate risk inquiries and do not interpret the uniqueness window as the browser session lifetime.',
+    sourceIds: ['integration', 'commerce'],
+    resolution: 'unresolved',
   },
   {
     id: 'timestamp-pattern',
@@ -209,14 +257,15 @@ export const checklist: {
   },
   {
     id: 'token_lifecycle',
-    description: 'Token caching, expiry and refresh are exercised.',
-    sourceIds: ['integration'],
+    description:
+      'The merchant application reuses cached JWTs until shortly before expiry and exercises concurrent refresh and refresh failures.',
+    sourceIds: ['integration', 'referenceToken'],
     kind: 'recommendation',
   },
   {
     id: 'device_data_collection',
     description:
-      'DDC and the order share a session ID, or the documented exclusion flow is justified.',
+      'DDC runs on eligible checkout entry paths, creates a fresh ID for each browser session, and attaches device data to the evaluated order, or the documented exclusion flow is justified.',
     sourceIds: ['integration'],
     kind: 'documented_requirement',
   },
@@ -260,8 +309,8 @@ export const checklist: {
   {
     id: 'error_handling',
     description:
-      '400/401/403/429/500/503 outcomes are handled without treating failures as approval.',
-    sourceIds: ['errors', 'integration'],
+      'Handle token and Orders errors by operation. Verify bounded retries for transient failures, rate limits, and reconciliation before repeating writes with uncertain outcomes.',
+    sourceIds: ['errors', 'integration', 'referencePayment'],
     kind: 'recommendation',
   },
   {

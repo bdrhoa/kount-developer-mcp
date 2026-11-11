@@ -1,4 +1,11 @@
-import { documentationIssues, guidance, sources, topics } from '../resources/v2/knowledge.js';
+import {
+  documentationIssues,
+  guidance,
+  guidancePrecedence,
+  openShopRefundEvidence,
+  sources,
+  topics,
+} from '../resources/v2/knowledge.js';
 import type { DocumentationIssue, Guidance, Source, Topic } from '../resources/v2/knowledge.js';
 import { sandbox } from '../resources/v2/environment.js';
 
@@ -29,6 +36,10 @@ export class DocumentationService {
       environment: sandbox,
       requirements: entry.requirements,
       recommendations: entry.recommendations,
+      guidancePrecedence,
+      ...(topic === 'authorization_updates' || topic === 'webhooks'
+        ? { integrationEvidence: [openShopRefundEvidence] }
+        : {}),
       sources: this.referencesFor(entry.sourceIds),
       conflicts: this.issues
         .filter((issue) => topic === 'overview' || issue.topics.includes(topic))

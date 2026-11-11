@@ -36,6 +36,27 @@ this implementation even when reference snippets point at production or older
 login hosts. Authenticated order operations are not implemented; explicit
 Sandbox token acquisition is implemented at the user's request.
 
+## Order operation references
+
+The `/commerce/help` links below are documentation pages. The production
+reference shows requests to `https://api.kount.com`. For Sandbox requests,
+use `https://api-sandbox.kount.com` with the same method and path.
+
+| Sandbox method | Sandbox request URL                                          |
+| -------------- | ------------------------------------------------------------ |
+| POST           | `https://api-sandbox.kount.com/commerce/v2/orders`           |
+| PATCH          | `https://api-sandbox.kount.com/commerce/v2/orders/{orderId}` |
+
+Add `?riskInquiry=true` to the POST URL to request a risk evaluation.
+
+| Operation                             | MCP schema key   | Production reference                                                                                   | Sandbox reference                                                                                              |
+| ------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `POST /commerce/v2/orders`            | `evaluate_order` | [Evaluate Order](https://api.kount.com/commerce/help#operation/CommerceOrchestrator_EvaluateOrderRisk) | [Evaluate Order](https://api-sandbox.kount.com/commerce/help#operation/CommerceOrchestrator_EvaluateOrderRisk) |
+| `PATCH /commerce/v2/orders/{orderId}` | `update_order`   | [Update Order](https://api.kount.com/commerce/help#operation/CommerceOrchestrator_UpdateOrder)         | [Update Order](https://api-sandbox.kount.com/commerce/help#operation/CommerceOrchestrator_UpdateOrder)         |
+
+On November 11, 2026, both published OpenAPI documents matched the MCP’s
+pinned fingerprint and contained both operation IDs.
+
 ## Specification retrieval and rights
 
 The Sandbox ReDoc page embeds `const __redoc_state`, whose `spec.data` is the

@@ -11,7 +11,8 @@ describe('documentation', () => {
     if (result.status === 'available') {
       expect(
         result.sources.every(
-          (source) => source.url.startsWith('https://') && source.verifiedAt === '2026-11-03',
+          (source) =>
+            source.url.startsWith('https://') && /^\d{4}-\d{2}-\d{2}$/.test(source.verifiedAt),
         ),
       ).toBe(true);
       expect(result.requirements.length).toBeGreaterThan(0);
@@ -42,6 +43,19 @@ describe('documentation', () => {
 });
 
 describe('readiness is a self assessment', () => {
+  it('keeps Sandbox observations caller-reported and asks for the post-authorization outcome', () => {
+    const result = checkIntegrationReadiness({
+      capabilities: ['decision_handling'],
+      evidence: { decision_handling: 'sandbox_observed' },
+      configuration: { authorizationFlow: 'post' },
+    });
+    expect(result.passed[0]).toMatchObject({
+      evidence: 'caller_reported_only',
+      reportedEvidence: 'sandbox_observed',
+    });
+    expect(result.configurationNotes.join(' ')).toContain('provider-confirmed refund');
+    expect(result.ready).toBeNull();
+  });
   it('reports omitted capabilities and manual verification', () => {
     const result = checkIntegrationReadiness({ capabilities: ['authentication'] });
     expect(result.passed.map((check) => check.id)).toEqual(['authentication']);

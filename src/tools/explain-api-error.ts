@@ -3,9 +3,11 @@ import { sources } from '../resources/v2/knowledge.js';
 import { object } from '../services/schema.js';
 import type { ValidationService } from '../services/validation.js';
 import { sandbox } from '../resources/v2/environment.js';
+import { operations } from '../schemas/v2/manifest.js';
 
 export const errorInput = z.strictObject({
   httpStatus: z.number().int().min(100).max(599),
+  operation: z.enum(['token', ...Object.keys(operations)]).optional(),
   responseBody: z.json().optional(),
   requestPayload: z.record(z.string(), z.json()).optional(),
 });
@@ -62,7 +64,20 @@ const documented: Record<number, { meaning: string; hypotheses: string[]; steps:
   },
 };
 export function explainApiError(input: z.infer<typeof errorInput>, validation: ValidationService) {
-  const entry = documented[input.httpStatus];
+  const isToken = input.operation === 'token';
+  const tokenRejection = isToken && [400, 401].includes(input.httpStatus);
+  const entry = tokenRejection
+    ? {
+        meaning: 'The Sandbox token request was rejected.',
+        hypotheses: [
+          'The Basic header format, key, or target environment may be wrong. The status alone does not establish the cause.',
+        ],
+        steps: [
+          'Check the deployed application secret locally for a duplicated Basic prefix, surrounding quotes, or embedded whitespace. Use the portal Sandbox API key directly after Basic.',
+          'Confirm the Sandbox token endpoint and client credentials parameters. A successful MCP token request checks only the credentials available to the MCP process.',
+        ],
+      }
+    : documented[input.httpStatus];
   const body = object(input.responseBody);
   const wrapped = object(body.error);
   // Never echo response messages or request values, which can contain sensitive data.
@@ -82,6 +97,7 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
   };
   return {
     httpStatus: input.httpStatus,
+    ...(input.operation ? { operation: input.operation } : {}),
     documented: entry !== undefined,
     environment: sandbox,
     confirmed: entry
@@ -92,19 +108,25 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
       'Consult the original documentation and Kount support using sanitized diagnostics.',
     ],
     observed,
-    ...(input.requestPayload
+    ...(input.requestPayload && (!input.operation || input.operation === 'evaluate_order')
       ? {
           payloadValidation: validation.validate(input.requestPayload),
           validationCaveat:
             'Local payload findings do not establish the cause of this HTTP response.',
         }
       : {}),
-    sources: [
-      sources.errors,
-      sources.commerce,
-      ...(input.httpStatus === 429 ? [sources.integration] : []),
-    ],
-    documentationConflict:
-      'The error guide and Commerce schema describe different response envelopes; neither is assumed universal.',
+    sources: isToken
+      ? [sources.integration]
+      : [
+          sources.errors,
+          sources.commerce,
+          ...(input.httpStatus === 429 ? [sources.integration] : []),
+        ],
+    ...(!isToken
+      ? {
+          documentationConflict:
+            'The error guide and Commerce schema describe different response envelopes; neither is assumed universal.',
+        }
+      : {}),
   };
 }

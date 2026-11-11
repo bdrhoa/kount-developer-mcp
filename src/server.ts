@@ -12,6 +12,7 @@ import { readinessInput, checkIntegrationReadiness } from './tools/check-integra
 import { EnvironmentCredentials } from './services/credentials.js';
 import { SandboxAuthentication } from './services/authentication.js';
 import { authenticateInput, authenticateSandbox } from './tools/authenticate-sandbox.js';
+import { guidancePrecedence } from './resources/v2/knowledge.js';
 
 export const version = '0.1.0';
 export function createServer(schemaPath?: string): McpServer {
@@ -19,7 +20,8 @@ export function createServer(schemaPath?: string): McpServer {
     { name: 'kount-developer-mcp', version },
     {
       instructions:
-        'Unofficial community project, unaffiliated with Kount or Equifax. Target Sandbox only: token URL https://login-uat.equifax.com/as/token; API base https://api-sandbox.kount.com. Use synthetic data. Configure credentials only through local KOUNT_CLIENT_ID and KOUNT_API_KEY environment variables, never chat or tool arguments. Only authenticate_sandbox makes a network call, to the fixed Sandbox token endpoint. The other tools are local. No order API calls are implemented. Treat indeterminate and unavailable validation as unresolved.',
+        'Unofficial community project, unaffiliated with Kount or Equifax. Target Sandbox only: token URL https://login-uat.equifax.com/as/token; API base https://api-sandbox.kount.com. Use synthetic data. Configure credentials only through local KOUNT_CLIENT_ID and KOUNT_API_KEY environment variables, never chat or tool arguments. Only authenticate_sandbox makes a network call, to the fixed Sandbox token endpoint. The other tools are local. No order API calls are implemented. Treat indeterminate and unavailable validation as unresolved. ' +
+        guidancePrecedence,
     },
   );
   const docs = new DocumentationService();
@@ -101,13 +103,13 @@ export function createServer(schemaPath?: string): McpServer {
   );
   register(
     'explain_api_error',
-    'Explain documented status semantics, separate hypotheses, and optionally validate a synthetic payload. Never echoes response messages or infers a cause for HTTP 500.',
+    'Explain API errors by operation, including Sandbox token failures. Optionally validate a synthetic Evaluate Order payload. Never echoes response messages or infers a cause for HTTP 500.',
     errorInput,
     (input) => explainApiError(input, validation),
   );
   register(
     'check_integration_readiness',
-    'Assess caller-reported capabilities and local credential/authentication status against a cited checklist. Never returns credentials or authenticates automatically. Includes manual verification; does not inspect application code or certify readiness.',
+    'Assess caller-reported capabilities and evidence against a cited checklist with checks for the configured authorization flow. Includes local credential status and manual verification. Does not inspect application code or certify readiness.',
     readinessInput,
     (input) => checkIntegrationReadiness(input, authentication.status()),
   );
