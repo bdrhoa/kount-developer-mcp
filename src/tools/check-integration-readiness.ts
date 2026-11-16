@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assessHostedCheckout, hostedCheckoutEvidence } from './hosted-checkout-evidence.js';
 import {
   capabilities,
   checklist,
@@ -11,6 +12,7 @@ import { sandbox } from '../resources/v2/environment.js';
 import type { CredentialStatus } from '../services/credentials.js';
 
 export const readinessInput = z.strictObject({
+  hostedCheckout: hostedCheckoutEvidence.optional(),
   capabilities: z.array(z.enum(capabilities)).max(50),
   evidence: z
     .partialRecord(
@@ -62,6 +64,7 @@ export function checkIntegrationReadiness(
     failed,
     manual,
     configuration,
+    ...(input.hostedCheckout ? { hostedCheckout: assessHostedCheckout(input.hostedCheckout) } : {}),
     guidancePrecedence,
     configurationNotes: [
       'Configuration and evidence are caller-reported. Confirm applicability and outcomes in the target integration.',

@@ -4,6 +4,46 @@ Read the newest entry first, then `DECISIONS.md` and `README.md`. Prepend new
 entries below this introduction; preserve earlier notes. Use
 `docs/HANDOFF_WORKFLOW.md` for the checkpoint procedure.
 
+## 2026-11-16 16:10 UTC-07:00 — Codex — OpenShop POC 2 implementation
+
+### Current state
+
+- Brad authorized implementing all five POC 2 recommendations in the independent
+  MCP. Work is local on `master`. The unrelated, pre-existing `.gitignore` edit
+  was preserved.
+
+### Completed
+
+- Readiness correlates caller-supplied checkout, deployment, webhook, Kount
+  order, and payment evidence. It separately reports device-session continuity,
+  Kount device attachment, and cross-order reuse.
+- Generation and validation cover evaluation and data-only POSTs and status
+  PATCHes. The pinned PATCH schema recognizes `riskInquiry.decision` but rejects
+  `DECLINED` as a risk decision. Unknown fields remain advisory where allowed
+  by the original schema. Examples cover issuer declines and Radar blocks.
+- API diagnostics account for ambiguous write outcomes and the total retry
+  deadline. Hosted-checkout guides include buyer, payment, fulfillment and
+  asynchronous refund fixtures. README documents the new optional inputs.
+
+### Verification
+
+- On pinned Node 26.13.0, build, typecheck, lint, formatting, all 76 tests, and
+  a compiled stdio smoke test passed. The tests use the verified local Commerce
+  schema and synthetic checkout evidence. No live payment or order API calls
+  were made. Changes are uncommitted.
+
+### Decisions and open questions
+
+- D005–D007 still apply. Kount behavior for shared device session IDs across
+  separate orders remains open. The MCP reports caller evidence and local
+  contract findings without claiming remote acceptance.
+
+### Next steps
+
+1. Restart the MCP client attached to this checkout to load the rebuilt server.
+2. During the next sandbox checkout, use matching redacted evidence to verify
+   deployment and payment outcomes, and confirm any disputed provider behavior.
+
 ## 2026-11-11 13:38 UTC-07:00 — Codex — OpenShop guidance in MCP tools
 
 - Implemented D006 guidance in the existing MCP tools at Brad’s request and

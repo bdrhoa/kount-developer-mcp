@@ -57,6 +57,13 @@ export const sources: Record<string, Source> = {
     apiVersion: '2.0.0',
     kind: 'reference_example',
   },
+  openShopHostedCheckout: {
+    id: 'openShopHostedCheckout',
+    url: 'https://github.com/bdrhoa/OpenShop/blob/0e3d89a72eb866a9d90bd63f8c42b1c6ea59a245/docs/KOUNT.md',
+    verifiedAt: '2026-11-16',
+    apiVersion: '2.0.0',
+    kind: 'reference_example',
+  },
   referencePayment: {
     id: 'referencePayment',
     url: 'https://github.com/bdrhoa/k360pf/blob/58300d413072dfcf03ea13628b4500a8dd8e24e6/typescript/payments/api/server.ts#L109-L172',
@@ -101,7 +108,7 @@ export const guidance: Record<Topic, Guidance> = {
       'Pass the same deviceSessionId from the end-user DDC flow to the order. The guide calls for uniqueness for at least 30 days.',
     ],
     recommendations: [
-      'Check order.riskInquiry[0].device.id when testing collection.',
+      'Check order.riskInquiry[0].device.id when testing collection. Use the hostedCheckout readiness evidence to compare the browser, Stripe and Kount session IDs and report reuse separately.',
       'Maintainer guidance: create a fresh DDC ID for each new browser session. Keep it through navigation and checkout handoff within that session. Test browser session restoration and confirm any reuse across separate risk inquiries.',
       'Checkout-only collection can work when the merchant controls that page and all buyers reach it before payment. With direct links to hosted Stripe Checkout, as in OpenShop, start DDC on every eligible storefront entry, including deep links. Test SDK loading, CSP, redirects, and device attachment on the evaluated order.',
       'The guide documents excludeDevice=true when collection cannot represent the actual end user, such as a call-center or kiosk flow.',
@@ -115,11 +122,12 @@ export const guidance: Record<Topic, Guidance> = {
     ],
     recommendations: [
       'Maintainer guidance: prefer pre-authorization risk evaluation when the checkout flow permits it to help protect against card testing. Call Kount before requesting card authorization. For OpenShop hosted Stripe Checkout, evaluate after authorization and before capture because the merchant lacks a pre-authorization hook in that flow.',
+      'OpenShop reports a hosted-checkout issuer decline as REFUSED / DECLINED and a Radar block as REFUSED / UNKNOWN in a data-only POST. A Radar block occurs before issuer authorization. Do not decide order or authorization state from the spelling of a Kount risk decision.',
       'Use bounded backoff for transient failures and honor rate limits. Reconcile uncertain outcomes before retrying writes. Test simultaneous duplicate deliveries and timeouts after the provider has accepted a request. Keep failures separate from fraud approvals.',
       'Supply relevant known order data. Monetary strings such as orderTotal use the lowest currency denomination.',
       'Include postalCode and countryCode when supplying addresses, following the guide’s accuracy advice.',
     ],
-    sourceIds: ['integration', 'commerce', 'referencePayment'],
+    sourceIds: ['integration', 'commerce', 'referencePayment', 'openShopHostedCheckout'],
   },
   authorization_updates: {
     requirements: [
@@ -129,9 +137,10 @@ export const guidance: Record<Topic, Guidance> = {
     recommendations: [
       'Retain the returned order identifier and test the selected payment lifecycle with Kount. Confirm identifier spelling and decision vocabulary where the guide conflicts with the schema.',
       'In a post-authorization flow, send the known authorization outcome with the initial evaluation. For an uncaptured REVIEW order declined by a reviewer, cancel or release the authorization. For an already captured REVIEW order, issue a refund through the payment provider. Keep fulfillment blocked and record a refund as complete only after provider confirmation.',
+      'For hosted Stripe Checkout, check the refund reason before use. A fraudulent refund can affect later Radar decisions for the same identities.',
       'Verify the applicable Kount update or reversal reporting separately from the payment-provider action. The k360pf PATCH demo illustrates the pre-authorization sequence using simulated data.',
     ],
-    sourceIds: ['integration', 'commerce', 'referencePayment'],
+    sourceIds: ['integration', 'commerce', 'referencePayment', 'openShopHostedCheckout'],
   },
   webhooks: {
     requirements: [
@@ -144,7 +153,7 @@ export const guidance: Record<Topic, Guidance> = {
       'The k360pf status event example uses eventType Order.StatusChange, fieldName status, kountOrderId, merchantOrderId, and newValue. Use the sample for a fixture and verify the relevant payload shape with a current Sandbox delivery.',
       'Verify signature, timestamp, duplicate handling, order correlation, and resulting payment and fulfillment changes independently. An HTTP 200 shows acknowledgment. Confirm the provider outcome for the same order.',
     ],
-    sourceIds: ['webhooks', 'referenceWebhook'],
+    sourceIds: ['webhooks', 'referenceWebhook', 'openShopHostedCheckout'],
   },
 };
 export type DocumentationIssue = {

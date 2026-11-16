@@ -41,7 +41,9 @@ export function checkInputSize(value: unknown): void {
 }
 
 export class ValidationService {
-  private validator: ValidateFunction | undefined;
+  private readonly validators: Partial<
+    Record<'evaluate_order' | 'update_order', ValidateFunction>
+  > = {};
   constructor(private readonly schema: SchemaService) {
     if (!schema.doc) return;
     const ajv = new Ajv({ strict: false, allErrors: true, logger: false, ownProperties: true });
@@ -54,12 +56,20 @@ export class ValidationService {
       validate: (s: string) =>
         /^\d+$/.test(s) && s.replace(/^0+/, '').length <= 20 && BigInt(s) <= 18446744073709551615n,
     });
-    this.validator = ajv.compile({
-      $ref: '#/components/schemas/OrderPostBody',
-      components: schema.doc.components,
-    });
+    for (const operation of ['evaluate_order', 'update_order'] as const) {
+      const body = object(schema.operation(operation).requestBody);
+      const json = object(object(body.content)['application/json']);
+      this.validators[operation] = ajv.compile({
+        ...object(json.schema),
+        components: schema.doc.components,
+      });
+    }
   }
-  validate(payload: JsonObject): ValidationResult {
+  validate(
+    payload: JsonObject,
+    operation: 'evaluate_order' | 'update_order' = 'evaluate_order',
+  ): ValidationResult {
+    const validator = this.validators[operation];
     checkInputSize(payload);
     const errors: Finding[] = [];
     const warnings: Finding[] = [];
@@ -72,16 +82,16 @@ export class ValidationService {
       coverage:
         'Downloaded OpenAPI assertions plus explicitly sourced prose rules. No live API acceptance, business policy, token validity, or cross-field completeness is established.',
     };
-    if (!this.validator)
+    if (!validator)
       return {
         ...base,
         valid: null,
         status: 'unavailable',
         warnings: [{ path: '$', code: 'schema_unavailable', message: schemaSetup }],
       };
-    const rawValid = this.validator(payload);
+    const rawValid = validator(payload);
     let ambiguous = false;
-    for (const issue of (this.validator.errors ?? []) as ErrorObject[]) {
+    for (const issue of (validator.errors ?? []) as ErrorObject[]) {
       let path = pointerPath(issue.instancePath);
       if (issue.keyword === 'required') path += `[${JSON.stringify(issue.params.missingProperty)}]`;
       const timestampConflict =
@@ -112,8 +122,9 @@ export class ValidationService {
       }
     }
     this.proseChecks(payload, errors);
-    this.walkAdvisories(payload, { $ref: '#/components/schemas/OrderPostBody' }, '$', warnings);
-    if (payload.deviceSessionId === undefined)
+    const component = operation === 'update_order' ? 'OrderPatchBody' : 'OrderPostBody';
+    this.walkAdvisories(payload, { $ref: `#/components/schemas/${component}` }, '$', warnings);
+    if (operation === 'evaluate_order' && payload.deviceSessionId === undefined)
       suggestions.push({
         path: '$["deviceSessionId"]',
         code: 'ddc_session',

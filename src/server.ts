@@ -91,25 +91,25 @@ export function createServer(schemaPath?: string): McpServer {
   );
   register(
     'validate_order_payload',
-    'Validate a synthetic v2 order against the local spec and sourced prose constraints. valid:null means unavailable or indeterminate. No network calls.',
+    'Validate a synthetic v2 order, optionally with evaluation POST, data-only POST, or status PATCH request metadata. valid:null means unavailable or indeterminate. No network calls.',
     validateInput,
     (input) => validateOrderPayload(input, validation),
   );
   register(
     'generate_order_example',
-    'Generate a synthetic basic_purchase, physical_goods or digital_goods request; only returns payloads that pass the shared validator.',
+    'Generate a validated synthetic evaluation, data-only, or status-update order example, including optional issuer-decline and Radar-block fixtures.',
     generateInput,
     (input) => generateOrderExample(input, validation),
   );
   register(
     'explain_api_error',
-    'Explain API errors by operation, including Sandbox token failures. Optionally validate a synthetic Evaluate Order payload. Never echoes response messages or infers a cause for HTTP 500.',
+    'Explain API and transport failures by operation, with optional retry deadline and reconciliation evidence. Optionally validate a synthetic POST or PATCH payload. Never echoes response messages or infers a cause for HTTP 500.',
     errorInput,
     (input) => explainApiError(input, validation),
   );
   register(
     'check_integration_readiness',
-    'Assess caller-reported capabilities and evidence against a cited checklist with checks for the configured authorization flow. Includes local credential status and manual verification. Does not inspect application code or certify readiness.',
+    'Assess caller-reported capabilities and evidence against a cited checklist with checks for the configured authorization flow. Correlates optional redacted evidence from a single hosted Stripe checkout and reports local credential status. Does not inspect application code or certify readiness.',
     readinessInput,
     (input) => checkIntegrationReadiness(input, authentication.status()),
   );

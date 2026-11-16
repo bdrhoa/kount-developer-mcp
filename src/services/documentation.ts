@@ -7,6 +7,7 @@ import {
   topics,
 } from '../resources/v2/knowledge.js';
 import type { DocumentationIssue, Guidance, Source, Topic } from '../resources/v2/knowledge.js';
+import { hostedCheckoutLifecycle } from '../resources/v2/hosted-checkout.js';
 import { sandbox } from '../resources/v2/environment.js';
 
 export class DocumentationService {
@@ -38,7 +39,7 @@ export class DocumentationService {
       recommendations: entry.recommendations,
       guidancePrecedence,
       ...(topic === 'authorization_updates' || topic === 'webhooks'
-        ? { integrationEvidence: [openShopRefundEvidence] }
+        ? { integrationEvidence: [openShopRefundEvidence], hostedCheckoutLifecycle }
         : {}),
       sources: this.referencesFor(entry.sourceIds),
       conflicts: this.issues

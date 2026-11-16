@@ -6,11 +6,91 @@ import { sandbox } from '../resources/v2/environment.js';
 import { operations } from '../schemas/v2/manifest.js';
 
 export const errorInput = z.strictObject({
-  httpStatus: z.number().int().min(100).max(599),
+  httpStatus: z.number().int().min(100).max(599).optional(),
   operation: z.enum(['token', ...Object.keys(operations)]).optional(),
   responseBody: z.json().optional(),
   requestPayload: z.record(z.string(), z.json()).optional(),
+  retryContext: z
+    .strictObject({
+      failurePhase: z.enum(['before_send', 'awaiting_response', 'response_received']).optional(),
+      orderId: z.string().trim().min(1).max(200).optional(),
+      merchantOrderId: z.string().trim().min(1).max(200).optional(),
+      correlationId: z.string().trim().min(1).max(200).optional(),
+      retryAfterMs: z.number().int().nonnegative().max(86400000).optional(),
+      budget: z
+        .strictObject({
+          remainingMs: z.number().int().nonnegative().max(86400000),
+          authenticationMs: z.number().int().nonnegative().max(86400000),
+          attemptTimeoutMs: z.number().int().positive().max(86400000),
+          maxAttempts: z.number().int().min(1).max(20),
+          maxTotalBackoffMs: z.number().int().nonnegative().max(86400000),
+        })
+        .optional(),
+    })
+    .optional(),
 });
+
+function assessRetry(input: z.infer<typeof errorInput>) {
+  const { operation, httpStatus, retryContext } = input;
+  const write =
+    operation === 'evaluate_order' ||
+    operation === 'update_order' ||
+    operation === 'batch_update_reversals';
+  const transient =
+    httpStatus === undefined || httpStatus === 408 || httpStatus === 429 || httpStatus >= 500;
+  const beforeSend = httpStatus === undefined && retryContext?.failurePhase === 'before_send';
+  const refreshToken = httpStatus === 401 && Boolean(operation) && operation !== 'token';
+  const ambiguous =
+    write &&
+    !beforeSend &&
+    (httpStatus === undefined || httpStatus === 408 || httpStatus === 409 || httpStatus >= 500);
+  const budget = retryContext?.budget;
+  const totalMs = budget
+    ? budget.authenticationMs +
+      budget.attemptTimeoutMs * budget.maxAttempts +
+      budget.maxTotalBackoffMs +
+      (retryContext?.retryAfterMs ?? 0) * (budget.maxAttempts - 1)
+    : undefined;
+
+  let action = 'resolve_rejection_before_retry';
+  if (ambiguous) action = 'reconcile_before_replay';
+  else if (transient || refreshToken) {
+    if (budget && totalMs !== undefined && totalMs > budget.remainingMs)
+      action = 'reduce_attempts_or_defer';
+    else if (refreshToken) action = 'refresh_token_once_within_deadline';
+    else if (operation === 'token' || operation === 'get_order' || beforeSend)
+      action = 'bounded_retry';
+    else action = 'confirm_rejection_and_retry_semantics';
+  }
+
+  return {
+    action,
+    priorOutcome: ambiguous
+      ? 'unknown'
+      : beforeSend
+        ? 'not_sent'
+        : httpStatus !== undefined &&
+            httpStatus >= 400 &&
+            httpStatus < 500 &&
+            ![408, 409, 429].includes(httpStatus)
+          ? 'rejected'
+          : 'unconfirmed',
+    ...(budget ? { worstCaseMs: totalMs, remainingMs: budget.remainingMs } : {}),
+    ...(retryContext?.retryAfterMs !== undefined
+      ? { retryAfterMs: retryContext.retryAfterMs }
+      : {}),
+    evidence: {
+      orderIdProvided: Boolean(retryContext?.orderId),
+      merchantOrderIdProvided: Boolean(retryContext?.merchantOrderId),
+      correlationIdProvided: Boolean(retryContext?.correlationId),
+    },
+    guidance: ambiguous
+      ? 'Use sanitized order and correlation identifiers to look for the original outcome before replay. Preserve an unresolved outcome when reconciliation is inconclusive.'
+      : 'Bound authentication, attempts and backoff to the remaining deadline. Honor Retry-After when supplied.',
+    fallback:
+      'Record any local fallback decision with its own source. An application fallback approval is not a Kount approval.',
+  };
+}
 const documented: Record<number, { meaning: string; hypotheses: string[]; steps: string[] }> = {
   400: {
     meaning: 'The request was rejected as invalid.',
@@ -64,8 +144,13 @@ const documented: Record<number, { meaning: string; hypotheses: string[]; steps:
   },
 };
 export function explainApiError(input: z.infer<typeof errorInput>, validation: ValidationService) {
+  const missingFailure =
+    input.httpStatus === undefined &&
+    input.retryContext?.failurePhase !== 'before_send' &&
+    input.retryContext?.failurePhase !== 'awaiting_response';
+
   const isToken = input.operation === 'token';
-  const tokenRejection = isToken && [400, 401].includes(input.httpStatus);
+  const tokenRejection = isToken && (input.httpStatus === 400 || input.httpStatus === 401);
   const entry = tokenRejection
     ? {
         meaning: 'The Sandbox token request was rejected.',
@@ -77,7 +162,9 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
           'Confirm the Sandbox token endpoint and client credentials parameters. A successful MCP token request checks only the credentials available to the MCP process.',
         ],
       }
-    : documented[input.httpStatus];
+    : input.httpStatus === undefined
+      ? undefined
+      : documented[input.httpStatus];
   const body = object(input.responseBody);
   const wrapped = object(body.error);
   // Never echo response messages or request values, which can contain sensitive data.
@@ -96,21 +183,35 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
           : null,
   };
   return {
-    httpStatus: input.httpStatus,
+    ...(missingFailure
+      ? { status: 'blocked', reason: 'Provide an HTTP status or the phase of a transport failure.' }
+      : {}),
+    httpStatus: input.httpStatus ?? null,
+    ...(!missingFailure && (input.operation || input.retryContext)
+      ? { retry: assessRetry(input) }
+      : {}),
     ...(input.operation ? { operation: input.operation } : {}),
     documented: entry !== undefined,
     environment: sandbox,
     confirmed: entry
       ? [entry.meaning]
-      : ['No verified Kount-specific explanation is included for this status.'],
+      : [
+          input.httpStatus === undefined
+            ? 'No HTTP response status was supplied.'
+            : 'No verified Kount-specific explanation is included for this status.',
+        ],
     hypotheses: entry?.hypotheses ?? [],
     steps: entry?.steps ?? [
       'Consult the original documentation and Kount support using sanitized diagnostics.',
     ],
     observed,
-    ...(input.requestPayload && (!input.operation || input.operation === 'evaluate_order')
+    ...(input.requestPayload &&
+    (!input.operation || input.operation === 'evaluate_order' || input.operation === 'update_order')
       ? {
-          payloadValidation: validation.validate(input.requestPayload),
+          payloadValidation: validation.validate(
+            input.requestPayload,
+            input.operation === 'update_order' ? 'update_order' : 'evaluate_order',
+          ),
           validationCaveat:
             'Local payload findings do not establish the cause of this HTTP response.',
         }

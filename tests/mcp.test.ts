@@ -71,6 +71,199 @@ describe('MCP over actual stdio', () => {
       }
     },
   );
+  it('checks POC 2 requests, correlated checkout evidence, and retry decisions', async () => {
+    const { client, transport } = connection(true);
+    try {
+      await client.connect(transport);
+      const call = (name: string, args: Record<string, unknown>) =>
+        client.callTool({ name, arguments: args });
+
+      for (const [failedAttempt, authResult] of [
+        ['issuer_decline', 'DECLINED'],
+        ['radar_block', 'UNKNOWN'],
+      ]) {
+        expect(
+          await call('generate_order_example', {
+            scenario: 'basic_purchase',
+            mode: 'data_only',
+            failedAttempt,
+          }),
+        ).toMatchObject({
+          structuredContent: {
+            status: 'generated',
+            request: { method: 'POST', query: { riskInquiry: false } },
+            payload: {
+              transactions: [{ transactionStatus: 'REFUSED', authorizationStatus: { authResult } }],
+            },
+            validation: { providerBehavior: 'unverified' },
+          },
+        });
+      }
+
+      const patch = { mode: 'status_update', method: 'PATCH', orderId: 'kount-order' };
+      expect(
+        await call('generate_order_example', {
+          scenario: 'basic_purchase',
+          mode: 'status_update',
+        }),
+      ).toMatchObject({
+        structuredContent: { status: 'generated', request: { method: 'PATCH' } },
+      });
+      expect(
+        await call('validate_order_payload', {
+          request: patch,
+          payload: { riskInquiry: { decision: 'DECLINED', undocumented: true } },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          valid: false,
+          errors: [expect.objectContaining({ code: 'schema_enum' })],
+          warnings: expect.arrayContaining([
+            expect.objectContaining({ code: 'unrecognized_field' }),
+          ]),
+        },
+      });
+      expect(
+        await call('validate_order_payload', {
+          request: { mode: 'evaluation', method: 'POST', query: { riskInquiry: false } },
+          payload: { merchantOrderId: 'merchant-order' },
+        }),
+      ).toMatchObject({ structuredContent: { valid: false, bodySchemaStatus: 'valid' } });
+
+      const delivery = {
+        eventId: 'stripe-event',
+        checkoutId: 'checkout',
+        paymentIntentId: 'payment',
+        endpointId: 'endpoint',
+        eventType: 'checkout.session.completed',
+        httpStatus: 200,
+      };
+      const checkout = {
+        checkoutId: 'checkout',
+        paymentIntentId: 'payment',
+        expectedEndpointId: 'endpoint',
+        expectedRevision: 'new',
+        deployedRevision: 'old',
+        holdMarker: true,
+        endpoint: { id: 'endpoint', subscribedEvents: ['checkout.session.completed'] },
+        kountOrder: { eventId: 'stripe-event', orderId: 'kount-order', decision: 'APPROVE' },
+        payment: { paymentIntentId: 'payment', state: 'captured', fulfillmentAllowed: true },
+        device: {
+          browserSessionId: 'session',
+          stripeSessionId: 'session',
+          kountSessionId: 'session',
+          kountOrderId: 'kount-order',
+          kountDeviceReturned: true,
+          otherEvaluations: [{ orderId: 'other-order', sessionId: 'session' }],
+        },
+      };
+      const readiness = (hostedCheckout: Record<string, unknown>) =>
+        call('check_integration_readiness', { capabilities: [], hostedCheckout });
+      expect(await readiness({ ...checkout, delivery })).toMatchObject({
+        structuredContent: {
+          hostedCheckout: {
+            checks: {
+              deploymentRevision: 'failed',
+              webhookProcessing: 'unverified',
+              kountEvaluation: 'unverified',
+            },
+          },
+        },
+      });
+      expect(
+        await readiness({
+          ...checkout,
+          delivery: { ...delivery, checkoutId: 'old-checkout', outcome: 'skipped' },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          hostedCheckout: {
+            checks: {
+              checkoutDelivery: 'failed',
+              kountEvaluation: 'failed',
+            },
+          },
+        },
+      });
+      expect(
+        await readiness({ ...checkout, delivery: { ...delivery, outcome: 'accepted' } }),
+      ).toMatchObject({
+        structuredContent: {
+          hostedCheckout: {
+            decisionSource: 'kount',
+            checks: {
+              kountEvaluation: 'verified',
+              paymentOutcome: 'verified',
+              fulfillment: 'verified',
+            },
+            device: {
+              kountSession: 'verified',
+              deviceReturned: 'verified',
+              sharedAcrossEvaluations: true,
+            },
+          },
+        },
+      });
+      expect(
+        await readiness({
+          ...checkout,
+          kountOrder: undefined,
+          payment: { ...checkout.payment, fallbackDecision: 'APPROVE' },
+          delivery: { ...delivery, outcome: 'accepted' },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          hostedCheckout: {
+            decisionSource: 'fallback',
+            checks: { kountEvaluation: 'unverified', paymentOutcome: 'verified' },
+          },
+        },
+      });
+
+      const retryContext = {
+        failurePhase: 'awaiting_response',
+        correlationId: 'redacted-correlation',
+        budget: {
+          remainingMs: 1000,
+          authenticationMs: 500,
+          attemptTimeoutMs: 500,
+          maxAttempts: 2,
+          maxTotalBackoffMs: 100,
+        },
+      };
+      const uncertain = await call('explain_api_error', {
+        operation: 'evaluate_order',
+        retryContext,
+      });
+      expect(uncertain).toMatchObject({
+        structuredContent: {
+          retry: {
+            action: 'reconcile_before_replay',
+            priorOutcome: 'unknown',
+            worstCaseMs: 1600,
+          },
+        },
+      });
+      expect(JSON.stringify(uncertain)).not.toContain('redacted-correlation');
+      expect(await call('explain_api_error', { operation: 'token', retryContext })).toMatchObject({
+        structuredContent: { retry: { action: 'reduce_attempts_or_defer' } },
+      });
+      expect(await call('get_integration_guide', { topic: 'authorization_updates' })).toMatchObject(
+        {
+          structuredContent: {
+            hostedCheckoutLifecycle: {
+              fixtures: expect.arrayContaining([
+                expect.objectContaining({ payment: 'refund_pending', fulfillmentAllowed: false }),
+                expect.objectContaining({ payment: 'refund_failed', fulfillmentAllowed: false }),
+              ]),
+            },
+          },
+        },
+      );
+    } finally {
+      await client.close();
+    }
+  });
   it('rejects invalid tool inputs and remains usable', async () => {
     const { client, transport, stderr } = connection(false);
     try {

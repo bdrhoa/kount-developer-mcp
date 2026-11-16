@@ -154,19 +154,25 @@ configured or exercised by this build.
 
 ## Tools and developer workflow
 
-| Tool                          | Inputs                                                  | Result                                                                                                             |
-| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `get_integration_guide`       | `topic`                                                 | Requirements, recommendations, dated sources and conflicts                                                         |
-| `get_api_schema`              | `operation`, optional `component`                       | Original request/response schemas and reachable components, with an explicit Sandbox endpoint                      |
-| `validate_order_payload`      | `payload` JSON object                                   | `valid`, `status`, `errors`, `warnings`, `suggestions`, paths and validation coverage                              |
-| `generate_order_example`      | `scenario`, optional `includeOptionalFields`            | Synthetic, validator-checked payload and complete Sandbox request URL                                              |
-| `explain_api_error`           | `httpStatus`, optional `responseBody`, `requestPayload` | Confirmed status meaning, separate hypotheses and troubleshooting steps                                            |
-| `check_integration_readiness` | `capabilities`, optional non-sensitive `configuration`  | Caller-reported passed/failed checks, observed credential/authentication state, manual verification and references |
-| `authenticate_sandbox`        | `{}`                                                    | **Network-enabled:** obtains/caches a Sandbox token from local credentials; returns status and expiry only         |
+| Tool                          | Inputs                                                                                             | Result                                                                                                             |
+| ----------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `get_integration_guide`       | `topic`                                                                                            | Requirements, recommendations, dated sources and conflicts                                                         |
+| `get_api_schema`              | `operation`, optional `component`                                                                  | Original request/response schemas and reachable components, with an explicit Sandbox endpoint                      |
+| `validate_order_payload`      | `payload` JSON object, optional `request`                                                          | `valid`, `status`, `errors`, `warnings`, `suggestions`, paths and validation coverage                              |
+| `generate_order_example`      | `scenario`, optional `mode`, `failedAttempt`, `includeOptionalFields`                              | Synthetic, validator-checked payload and complete Sandbox request URL                                              |
+| `explain_api_error`           | `httpStatus` or transport failure phase, optional `retryContext`, `responseBody`, `requestPayload` | Confirmed status meaning, separate hypotheses and troubleshooting steps                                            |
+| `check_integration_readiness` | `capabilities`, optional `configuration` and redacted `hostedCheckout` evidence                    | Caller-reported passed/failed checks, observed credential/authentication state, manual verification and references |
+| `authenticate_sandbox`        | `{}`                                                                                               | **Network-enabled:** obtains/caches a Sandbox token from local credentials; returns status and expiry only         |
 
 `explain_api_error` accepts an optional `operation` for token and Commerce
 diagnostics. Use `token` for token acquisition failures or one of the schema
-operation names below. Payload validation applies to Evaluate Order requests.
+operation names below. Payload validation applies to Evaluate Order and Update
+Order requests. For a transport failure without an HTTP response, set
+`retryContext.failurePhase` to `before_send` or `awaiting_response`. Supply
+redacted reconciliation identifiers if available. The optional `budget` uses
+milliseconds and includes remaining time, authentication time (including refresh
+if applicable), the attempt timeout, maximum attempts, and maximum total
+backoff. The estimate budgets for `retryAfterMs` separately.
 
 Topics: `authentication`, `device_data_collection`, `order_evaluation`,
 `authorization_updates`, `webhooks`, `overview`.
@@ -179,6 +185,24 @@ Scenarios: `basic_purchase`, `physical_goods`, `digital_goods`.
 `includeOptionalFields` adds a curated subset rather than every field. Examples
 use `payment.type=NONE`, constant illustrative identifiers, and no PAN or real
 customer data. Adapt identifiers and payment data for your integration.
+
+Example modes are `evaluation` (default POST with `riskInquiry=true`),
+`data_only` (POST with `riskInquiry=false`), and `status_update` (PATCH using a
+Kount order ID). Data-only examples can specify `failedAttempt: "issuer_decline"`
+or `"radar_block"`. Pass `request: { mode, method, query?, orderId? }` when
+validating a request. Copy those fields from the generated request descriptor.
+Body-only validation still uses the original POST schema.
+A schema pass leaves provider behavior unverified.
+
+For hosted Stripe Checkout, pass a consistent set of redacted checkout,
+PaymentIntent, event, endpoint, and order identifiers in `hostedCheckout`.
+Provide both revisions to check deployment drift and the expected and observed
+endpoint targets to detect a misrouted endpoint. Use redacted values consistently
+across the evidence. A successful HTTP status
+without a handler outcome leaves webhook processing unverified. Compare device
+session IDs from the browser, Stripe, and Kount independently of the device
+attachment and reuse checks. The `authorization_updates` and `webhooks` guides
+include lifecycle fixtures for payment, buyer status, fulfillment, and refunds.
 
 Readiness capability names: `authentication`, `token_lifecycle`,
 `device_data_collection`, `order_evaluation`, `decision_handling`,
