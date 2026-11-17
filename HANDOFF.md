@@ -4,6 +4,14 @@ Read the newest entry first, then `DECISIONS.md` and `README.md`. Prepend new
 entries below this introduction; preserve earlier notes. Use
 `docs/HANDOFF_WORKFLOW.md` for the checkpoint procedure.
 
+## 2026-11-17 11:33 UTC-07:00 — Codex — Unify order body schema selection
+
+- On `master`, validation now uses the same pinned operation body schema for
+  Ajv compilation and advisory traversal. The change is local and uncommitted.
+- Build, typecheck, lint, and all 76 tests passed with the cached fingerprinted
+  schema on local Node 26.3.0. The pinned Node 26.13.0 was not used.
+- No decisions changed. Review the local diff before committing.
+
 ## 2026-11-16 20:48 UTC-07:00 — Codex — Engineering skills setup
 
 ### Current state
