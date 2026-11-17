@@ -14,3 +14,21 @@ CLAUDE.local.md
 .claude/settings.local.json
 
 # Shared AGENTS.md, CLAUDE.md, handoff/decision files, and skills stay visible to Git.
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+wrangler.toml
+.wrangler
+.dev.vars
+/toml/
+!toml/*.example
+.env*
