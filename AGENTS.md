@@ -39,3 +39,17 @@ These instructions apply to Codex and Claude Code. Maintain shared rules here;
   a durable choice. Keep these files concise; do not copy chat transcripts.
 - Invoke the repository's `handoff` skill when available: `$handoff` in Codex or
   `/handoff` in Claude Code. If unavailable, read the shared workflow directly.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues for `bdrhoa/kount-developer-mcp`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five default triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo uses a single context with a root `GLOSSARY.md` and ADRs under `docs/adr/`. See `docs/agents/domain.md`.

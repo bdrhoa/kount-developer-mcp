@@ -4,6 +4,34 @@ Read the newest entry first, then `DECISIONS.md` and `README.md`. Prepend new
 entries below this introduction; preserve earlier notes. Use
 `docs/HANDOFF_WORKFLOW.md` for the checkpoint procedure.
 
+## 2026-11-16 20:48 UTC-07:00 — Codex — Engineering skills setup
+
+### Current state
+
+- Setup changes are uncommitted on `master`. The pre-existing `.gitignore`
+  edit was preserved.
+
+### Completed
+
+- Added the shared configuration pointers to `AGENTS.md` and the issue tracker,
+  triage labels, and single-context domain guidance to `docs/agents/`.
+- Created the four missing default triage labels on GitHub. The existing
+  `wontfix` label was reused.
+
+### Verification
+
+- Confirmed GitHub Issues is enabled and verified all five labels using
+  `gh label list`. Application tests were not run for this setup change.
+
+### Decisions and open questions
+
+- D008 records the approved setup. There are no open setup questions.
+
+### Next steps
+
+1. Use the configuration from `AGENTS.md` when invoking the engineering skills.
+2. Add glossary entries and ADRs as domain terms and decisions are settled.
+
 ## 2026-11-16 16:10 UTC-07:00 — Codex — OpenShop POC 2 implementation
 
 ### Current state

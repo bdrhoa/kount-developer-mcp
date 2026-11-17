@@ -102,3 +102,12 @@ with a link to their replacement.
 - **Decision:** Apply maintainer-confirmed guidance within its integration and
   environment. Surface disagreements and preserve the raw published schema.
   Present the OpenShop refund as a maintainer-reported outcome for that test.
+
+## D008 — Engineering skills configuration
+
+- **Date:** 2026-11-16
+- **Status:** Accepted
+- **Authority:** Brad approved the issue tracker, default labels, and setup draft.
+- **Decision:** Use GitHub Issues in `bdrhoa/kount-developer-mcp`, the five
+  default triage labels, and a single domain context. Keep the configuration
+  pointers in the shared `AGENTS.md` and the instructions in `docs/agents/`.
