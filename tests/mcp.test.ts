@@ -71,6 +71,72 @@ describe('MCP over actual stdio', () => {
       }
     },
   );
+  it('exposes general intent, lifecycle, recovery, response and correlation checks over stdio', async () => {
+    const { client, transport } = connection(true);
+    try {
+      await client.connect(transport);
+      const call = (name: string, args: Record<string, unknown>) =>
+        client.callTool({ name, arguments: args });
+      expect(
+        await call('explain_api_error', { operation: 'data_only_order', httpStatus: 500 }),
+      ).toMatchObject({ structuredContent: { retry: { fallback: { applies: false } } } });
+      expect(
+        await call('explain_api_error', {
+          operation: 'evaluate_order',
+          httpStatus: 200,
+          responseContext: { mode: 'evaluation' },
+          responseBody: {
+            order: { orderId: 'synthetic-order', riskInquiry: { decision: 'REVIEW' } },
+          },
+        }),
+      ).toMatchObject({
+        structuredContent: { responseDiagnostics: { status: 'usable', decision: 'REVIEW' } },
+      });
+      expect(
+        await call('check_integration_readiness', {
+          capabilities: [],
+          reporting: {
+            operation: 'data_only_order',
+            state: 'unknown',
+            lastOutcome: 'awaiting_response_failure',
+          },
+          integrationEvidence: {
+            attemptId: 'attempt',
+            authorizationFlow: 'pre',
+            evaluationBeforeAuthorization: true,
+            evaluation: { attemptId: 'attempt', orderId: 'order', decision: 'REVIEW' },
+          },
+          hostedCheckout: {
+            checkoutId: 'attempt',
+            paymentIntentId: 'payment',
+            flow: { authorizationHold: true, refunds: false },
+            endpoint: {
+              id: 'endpoint',
+              subscribedEvents: ['checkout.session.completed', 'payment_intent.canceled'],
+            },
+          },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          ready: null,
+          reporting: { action: 'reconcile_or_escalate' },
+          integrationEvidence: {
+            checks: { evaluationCorrelation: 'verified', authorizationTiming: 'verified' },
+          },
+          hostedCheckout: {
+            checks: {
+              subscriptions: {
+                'payment_intent.canceled': 'verified',
+                'refund.updated': 'not_applicable',
+              },
+            },
+          },
+        },
+      });
+    } finally {
+      await client.close();
+    }
+  });
   it('checks POC 2 requests, correlated checkout evidence, and retry decisions', async () => {
     const { client, transport } = connection(true);
     try {

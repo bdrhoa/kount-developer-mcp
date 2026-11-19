@@ -1,3 +1,4 @@
+import { integrationEvidence, assessIntegrationEvidence } from './integration-evidence.js';
 import { reportingEvidence, assessReporting } from './reporting-evidence.js';
 import { z } from 'zod';
 import { integrationPolicy } from '../resources/v2/integration-policy.js';
@@ -18,6 +19,7 @@ const settingKeys = z.array(z.string().regex(/^[A-Z][A-Z0-9_]{0,99}$/)).max(100)
 export const readinessInput = z.strictObject({
   hostedCheckout: hostedCheckoutEvidence.optional(),
   reporting: reportingEvidence.optional(),
+  integrationEvidence: integrationEvidence.optional(),
   capabilities: z.array(z.enum(capabilities)).max(50),
   evidence: z
     .partialRecord(
@@ -75,6 +77,9 @@ export function checkIntegrationReadiness(
     manual,
     configuration,
     integrationPolicy,
+    ...(input.integrationEvidence
+      ? { integrationEvidence: assessIntegrationEvidence(input.integrationEvidence) }
+      : {}),
     ...(input.reporting ? { reporting: assessReporting(input.reporting) } : {}),
     configurationUiCoverage:
       configuration.configurationUiAvailable === false

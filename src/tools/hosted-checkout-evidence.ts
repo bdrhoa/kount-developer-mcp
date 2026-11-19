@@ -1,3 +1,4 @@
+import { assessIntegrationEvidence } from './integration-evidence.js';
 import { z } from 'zod';
 import {
   lifecycleFlow,
@@ -176,6 +177,7 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
   const kountSession = deviceOrderCorrelated ? device?.kountSessionId : undefined;
   return {
     evidence: 'caller_reported_only',
+    correlatedEvidence: assessIntegrationEvidence(adaptHostedCheckout(input)),
     lifecycleEvent,
     checks: {
       deploymentRevision: observed(
@@ -236,5 +238,54 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
       guidance:
         'Report session reuse separately from collection. Use a fresh ID per browser session under current maintainer guidance and confirm whether Kount expects rotation between orders in that session.',
     },
+  };
+}
+
+/** Preserve the public Stripe input while sharing provider-neutral correlation checks. */
+export function adaptHostedCheckout(input: z.infer<typeof hostedCheckoutEvidence>) {
+  return {
+    attemptId: input.checkoutId,
+    paymentId: input.paymentIntentId,
+    provider: 'stripe',
+    authorizationFlow: 'post' as const,
+    lifecycleEvent: input.lifecycleEvent,
+    expectedEndpointId: input.expectedEndpointId ?? input.endpoint?.id,
+    event: input.delivery
+      ? {
+          id: input.delivery.eventId,
+          attemptId: input.delivery.checkoutId,
+          paymentId: input.delivery.paymentIntentId,
+          endpointId: input.delivery.endpointId,
+          outcome:
+            input.delivery.eventType ===
+            stripeLifecycleEvents[input.lifecycleEvent ?? 'authorized_checkout']
+              ? input.delivery.outcome
+              : ('skipped' as const),
+          httpStatus: input.delivery.httpStatus,
+        }
+      : undefined,
+    evaluation:
+      input.kountOrder && input.holdMarker === true
+        ? {
+            attemptId: input.checkoutId,
+            orderId: input.kountOrder.orderId,
+            eventId: input.kountOrder.eventId,
+            paymentId: input.paymentIntentId,
+            decision: input.kountOrder.decision,
+          }
+        : undefined,
+    payment: input.payment
+      ? {
+          id: input.payment.paymentIntentId,
+          attemptId: input.checkoutId,
+          state: input.payment.state,
+          fulfillmentAllowed: input.payment.fulfillmentAllowed,
+          reviewerDecision: input.payment.reviewerDecision,
+          fallbackDecision: input.holdMarker === true ? input.payment.fallbackDecision : undefined,
+        }
+      : undefined,
+    device: input.device
+      ? { ...input.device, handoffSessionId: input.device.stripeSessionId }
+      : undefined,
   };
 }

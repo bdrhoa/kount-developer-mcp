@@ -6,6 +6,21 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-18 22:18 UTC-07:00 — Codex — Improvement 5: provider-neutral evidence
+
+- Added integrationEvidence with generic merchant attempt, payment, event, Kount
+  order and device identifiers, declared pre/post flow and evidence origin.
+  Correlation checks retain mismatches and missing evidence separately.
+- Existing hostedCheckout inputs remain compatible; a Stripe adapter returns
+  the shared neutral assessment alongside legacy scoped checks. Tests exercise
+  Stripe and an unnamed processor for pre/post flows and identifier mismatches.
+- New compiled-stdio assertions cover all five improvements. No network order
+  requests, merchant-side worker or payment behavior was implemented.
+- Verification: build, typecheck, lint, formatting and all 114 tests passed on
+  Node 26.3.0 (pinned 26.13.0 unavailable); whitespace check passed. No live APIs.
+- All five authorized improvements are complete. Final commands after this
+  checkpoint commit: pull with rebase, push, verify clean matching branch tips.
+
 ## 2026-11-18 22:16 UTC-07:00 — Codex — Improvement 4: response diagnostics
 
 - Added successful-response assessment to error diagnostics via responseContext

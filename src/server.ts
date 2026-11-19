@@ -110,7 +110,7 @@ export function createServer(schemaPath?: string): McpServer {
   );
   register(
     'check_integration_readiness',
-    'Assess caller-reported capabilities and evidence against a cited checklist with checks for the configured authorization flow. Correlates optional redacted evidence from a single hosted Stripe checkout and reports local credential status. Does not inspect application code or certify readiness.',
+    'Assess caller-reported capabilities and evidence against a cited checklist with checks for the configured authorization flow. Correlates optional provider-neutral integrationEvidence for pre/post-authorization flows, reporting recovery evidence, or legacy hosted Stripe checkout evidence and reports local credential status. Does not inspect application code or certify readiness.',
     readinessInput,
     (input) => checkIntegrationReadiness(input, authentication.status()),
   );

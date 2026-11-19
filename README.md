@@ -287,6 +287,22 @@ Data-only acknowledgments need an order identifier, not a risk decision; PATCH
 acknowledgment semantics remain explicitly unverified. Guides return original
 synthetic `responseFixtures` with provenance; these are not live acceptance tests.
 
+Readiness also accepts provider-neutral `integrationEvidence`. Supply `attemptId`,
+`authorizationFlow: "pre" | "post"`, optional `paymentId`, `provider` (a caller
+label), `evidenceOrigin`, and correlated `event`, `evaluation`, `payment`, and
+`device` records. Events carry `id`, `attemptId`, optional payment/endpoint IDs,
+processing outcome and HTTP status. Evaluation carries `attemptId`, `orderId`,
+`decision`, optional `eventId` and `paymentId`. Payment carries `id`, `attemptId`,
+`state`, optional fulfillment and reviewer/fallback outcomes. Device evidence uses
+`browserSessionId`, `handoffSessionId`, `kountSessionId`, `kountOrderId` and
+`kountDeviceReturned`, without provider-specific field names. For pre-authorization
+flows, report `evaluationBeforeAuthorization` separately. No event naming scheme
+or payment behavior is inferred from the provider label.
+
+Existing `hostedCheckout` inputs remain supported and include `correlatedEvidence`
+through a Stripe adapter to the same neutral assessment. All observations remain
+caller-reported and `ready` remains null. Missing evidence is unverified.
+
 Example prompts:
 
 - “Explain the Sandbox authentication setup and authenticate using my local configuration.”
