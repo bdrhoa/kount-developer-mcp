@@ -278,6 +278,15 @@ failure/restart scenarios. Readiness accepts optional `reporting` evidence with
 reporting confirmation and recovery disposition independently. This is local
 assessment and guidance; the MCP does not run a recovery worker.
 
+For successful order responses, call `explain_api_error` with a 2xx `httpStatus`,
+`responseBody`, and `responseContext: { mode, jsonParsed? }` (or the shared
+request descriptor). `jsonParsed: false` records decoding failure without sending
+raw text. `responseDiagnostics` reports usable/missing/unknown decisions,
+identifier presence and object/array conflicts without echoing identifier values.
+Data-only acknowledgments need an order identifier, not a risk decision; PATCH
+acknowledgment semantics remain explicitly unverified. Guides return original
+synthetic `responseFixtures` with provenance; these are not live acceptance tests.
+
 Example prompts:
 
 - “Explain the Sandbox authentication setup and authenticate using my local configuration.”

@@ -108,7 +108,7 @@ export const guidance: Record<Topic, Guidance> = {
       'Pass the same deviceSessionId from the end-user DDC flow to the order. The guide calls for uniqueness for at least 30 days.',
     ],
     recommendations: [
-      'Check order.riskInquiry[0].device.id when testing collection. Use the hostedCheckout readiness evidence to compare the browser, Stripe and Kount session IDs and report reuse separately.',
+      'Check the device.id inside order.riskInquiry when testing collection. The pinned schema describes an object; reference examples use an array. Handle the discrepancy explicitly rather than assuming only index zero exists. Use the hostedCheckout readiness evidence to compare the browser, Stripe and Kount session IDs and report reuse separately.',
       'Maintainer guidance: create a fresh DDC ID for each new browser session. Keep it through navigation and checkout handoff within that session. Test browser session restoration and confirm any reuse across separate risk inquiries.',
       'Checkout-only collection can work when the merchant controls that page and all buyers reach it before payment. With direct links to hosted Stripe Checkout, as in OpenShop, start DDC on every eligible storefront entry, including deep links. Test SDK loading, CSP, redirects, and device attachment on the evaluated order.',
       'Verify collection configuration separately from server-side screening: client initialization, environment, CSP, SDK callbacks, and a bounded wait before redirecting to hosted payment. Check the deployed browser bundle, not just source code. Missing client configuration, failed SDK loading, and missing device attachment are distinct failures.',

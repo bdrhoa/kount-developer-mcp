@@ -104,7 +104,7 @@ export function createServer(schemaPath?: string): McpServer {
   );
   register(
     'explain_api_error',
-    'Explain API and transport failures by operation, with optional retry deadline and reconciliation evidence. Optionally validate a synthetic POST or PATCH payload. Never echoes response messages or infers a cause for HTTP 500.',
+    'Explain API/transport failures and assess successful order response shapes with optional responseContext (mode, jsonParsed), with optional retry deadline and reconciliation evidence. Optionally validate a synthetic POST or PATCH payload. Never echoes response messages or infers a cause for HTTP 500.',
     errorInput,
     (input) => explainApiError(input, validation),
   );

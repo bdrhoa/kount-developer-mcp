@@ -6,6 +6,17 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-18 22:16 UTC-07:00 — Codex — Improvement 4: response diagnostics
+
+- Added successful-response assessment to error diagnostics via responseContext
+  or shared request intent: recognized decisions, missing/unknown decision,
+  malformed success, ambiguous arrays and identifier-presence checks. No raw
+  identifiers or response messages are echoed. Data-only needs no risk decision.
+- Guides return synthetic response fixtures with provenance; object/array conflict
+  remains visible. Corrected DDC guidance that assumed array index zero.
+- Typecheck and all 108 tests passed on Node 26.3.0. No live requests.
+- Next: provider-neutral correlated evidence (5), full verification and sync.
+
 ## 2026-11-18 22:14 UTC-07:00 — Codex — Improvement 3: durable reporting recovery
 
 - Guides now return a language-neutral durable outbox/recovery recipe with

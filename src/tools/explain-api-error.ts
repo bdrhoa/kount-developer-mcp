@@ -1,3 +1,4 @@
+import { diagnoseOrderResponse } from './response-diagnostics.js';
 import { z } from 'zod';
 import { integrationPolicy } from '../resources/v2/integration-policy.js';
 import { sources } from '../resources/v2/knowledge.js';
@@ -12,6 +13,12 @@ export const errorInput = z.strictObject({
   operation: z.enum(['token', 'data_only_order', ...Object.keys(operations)]).optional(),
   request: orderRequest.optional(),
   responseBody: z.json().optional(),
+  responseContext: z
+    .strictObject({
+      mode: z.enum(['evaluation', 'data_only', 'status_update']),
+      jsonParsed: z.boolean().optional(),
+    })
+    .optional(),
   requestPayload: z.record(z.string(), z.json()).optional(),
   retryContext: z
     .strictObject({
@@ -176,6 +183,25 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
         message: 'Operation conflicts with request intent.',
       });
   }
+  if (input.responseContext && input.request && input.responseContext.mode !== input.request.mode)
+    requestErrors.push({
+      path: 'responseContext.mode',
+      code: 'request_operation_mismatch',
+      message: 'Response intent conflicts with request intent.',
+    });
+  if (
+    input.responseContext &&
+    input.operation &&
+    ((input.operation === 'data_only_order' && input.responseContext.mode !== 'data_only') ||
+      (input.operation === 'update_order' && input.responseContext.mode !== 'status_update') ||
+      (input.operation === 'evaluate_order' && input.responseContext.mode === 'status_update') ||
+      ['token', 'get_order', 'batch_update_reversals'].includes(input.operation))
+  )
+    requestErrors.push({
+      path: 'responseContext',
+      code: 'request_operation_mismatch',
+      message: 'Response context is not applicable to the operation.',
+    });
   const missingFailure =
     input.httpStatus === undefined &&
     input.retryContext?.failurePhase !== 'before_send' &&
@@ -222,6 +248,28 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
       ? { status: 'blocked', reason: 'Provide an HTTP status or the phase of a transport failure.' }
       : {}),
     httpStatus: input.httpStatus ?? null,
+    ...(input.httpStatus !== undefined &&
+    input.httpStatus >= 200 &&
+    input.httpStatus < 300 &&
+    !requestErrors.length &&
+    (input.operation === undefined ||
+      input.operation === 'evaluate_order' ||
+      input.operation === 'data_only_order' ||
+      input.operation === 'update_order')
+      ? {
+          responseDiagnostics: diagnoseOrderResponse(
+            input.responseBody,
+            input.responseContext?.mode ??
+              input.request?.mode ??
+              (input.operation === 'data_only_order'
+                ? 'data_only'
+                : input.operation === 'update_order'
+                  ? 'status_update'
+                  : undefined),
+            input.responseContext?.jsonParsed,
+          ),
+        }
+      : {}),
     ...(!missingFailure &&
     !requestErrors.length &&
     (input.operation || input.request || input.retryContext)

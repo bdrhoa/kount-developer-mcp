@@ -1,3 +1,4 @@
+import { responseFixtures } from '../resources/v2/response-fixtures.js';
 import { reportingRecovery } from '../resources/v2/reporting-recovery.js';
 import {
   documentationIssues,
@@ -42,6 +43,7 @@ export class DocumentationService {
       guidancePrecedence,
       integrationPolicy,
       reportingRecovery,
+      responseFixtures,
       ...(topic === 'authorization_updates' || topic === 'webhooks'
         ? { integrationEvidence: [openShopRefundEvidence], hostedCheckoutLifecycle }
         : {}),
