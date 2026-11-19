@@ -1,3 +1,4 @@
+import { reportingEvidence, assessReporting } from './reporting-evidence.js';
 import { z } from 'zod';
 import { integrationPolicy } from '../resources/v2/integration-policy.js';
 import { assessHostedCheckout, hostedCheckoutEvidence } from './hosted-checkout-evidence.js';
@@ -16,6 +17,7 @@ const settingKeys = z.array(z.string().regex(/^[A-Z][A-Z0-9_]{0,99}$/)).max(100)
 
 export const readinessInput = z.strictObject({
   hostedCheckout: hostedCheckoutEvidence.optional(),
+  reporting: reportingEvidence.optional(),
   capabilities: z.array(z.enum(capabilities)).max(50),
   evidence: z
     .partialRecord(
@@ -73,6 +75,7 @@ export function checkIntegrationReadiness(
     manual,
     configuration,
     integrationPolicy,
+    ...(input.reporting ? { reporting: assessReporting(input.reporting) } : {}),
     configurationUiCoverage:
       configuration.configurationUiAvailable === false
         ? { status: 'not_applicable' as const, evidence: 'caller_reported_only' }

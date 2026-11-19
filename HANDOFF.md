@@ -6,6 +6,16 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-18 22:14 UTC-07:00 — Codex — Improvement 3: durable reporting recovery
+
+- Guides now return a language-neutral durable outbox/recovery recipe with
+  failure, ambiguity, outage, restart and duplicate acceptance scenarios.
+- Optional readiness reporting evidence separates acknowledgments from Kount
+  confirmation, checks outcome/state consistency and durable recovery ownership,
+  and retains unknown write outcomes for reconciliation/escalation.
+- Typecheck and all 100 tests passed on Node 26.3.0. No worker or live requests.
+- Next: response diagnostics/fixtures (4), generic evidence (5), final sync.
+
 ## 2026-11-18 22:13 UTC-07:00 — Codex — Improvement 2: lifecycle evidence
 
 - Added optional declared flow features and lifecycle events to hosted evidence;

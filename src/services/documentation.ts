@@ -1,3 +1,4 @@
+import { reportingRecovery } from '../resources/v2/reporting-recovery.js';
 import {
   documentationIssues,
   guidance,
@@ -40,6 +41,7 @@ export class DocumentationService {
       recommendations: entry.recommendations,
       guidancePrecedence,
       integrationPolicy,
+      reportingRecovery,
       ...(topic === 'authorization_updates' || topic === 'webhooks'
         ? { integrationEvidence: [openShopRefundEvidence], hostedCheckoutLifecycle }
         : {}),

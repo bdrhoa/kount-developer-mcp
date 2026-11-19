@@ -269,6 +269,15 @@ Missing UI evidence is `unverified`; an explicitly absent UI is `not_applicable`
 The comparison cannot establish that the supplied ENV inventory is complete or
 that settings are saved and applied correctly.
 
+Guides include `reportingRecovery`: a client outbox/recovery recipe and synthetic
+failure/restart scenarios. Readiness accepts optional `reporting` evidence with
+`operation`, `state` (`pending`, `confirmed`, `rejected`, `unknown`), optional
+`lastOutcome`, and booleans for `durableIntent`, `independentRecovery`,
+`recoveryOwnerAssigned`, `nextAttemptScheduled`, `escalationAssigned`,
+`eventAcknowledged`, and `paymentEffectsRepeated`. It checks consistency,
+reporting confirmation and recovery disposition independently. This is local
+assessment and guidance; the MCP does not run a recovery worker.
+
 Example prompts:
 
 - “Explain the Sandbox authentication setup and authenticate using my local configuration.”
