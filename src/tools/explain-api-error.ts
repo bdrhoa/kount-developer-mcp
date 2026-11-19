@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { integrationPolicy } from '../resources/v2/integration-policy.js';
 import { sources } from '../resources/v2/knowledge.js';
 import { object } from '../services/schema.js';
 import type { ValidationService } from '../services/validation.js';
@@ -65,6 +66,7 @@ function assessRetry(input: z.infer<typeof errorInput>) {
 
   return {
     action,
+    policy: integrationPolicy.retries,
     priorOutcome: ambiguous
       ? 'unknown'
       : beforeSend
@@ -85,10 +87,16 @@ function assessRetry(input: z.infer<typeof errorInput>) {
       correlationIdProvided: Boolean(retryContext?.correlationId),
     },
     guidance: ambiguous
-      ? 'Use sanitized order and correlation identifiers to look for the original outcome before replay. Preserve an unresolved outcome when reconciliation is inconclusive.'
+      ? 'Reconcile with a known Kount order ID when available; do not assume merchantOrderId lookup or idempotency. Bounded replay may create duplicates. Keep the prior outcome unknown even when applying a local evaluation fallback.'
       : 'Bound authentication, attempts and backoff to the remaining deadline. Honor Retry-After when supplied.',
     fallback:
-      'Record any local fallback decision with its own source. An application fallback approval is not a Kount approval.',
+      operation === 'evaluate_order'
+        ? integrationPolicy.evaluationFallback
+        : {
+            applies: false,
+            guidance:
+              'No evaluation fallback applies to this operation. Preserve the error and arrange recovery.',
+          },
   };
 }
 const documented: Record<number, { meaning: string; hypotheses: string[]; steps: string[] }> = {

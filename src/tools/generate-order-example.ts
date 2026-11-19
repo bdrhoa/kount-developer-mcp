@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { integrationPolicy } from '../resources/v2/integration-policy.js';
 import type { ValidationService } from '../services/validation.js';
 import type { JsonObject } from '../services/schema.js';
 import { orderModes, validateOrderPayload } from './validate-order-payload.js';
@@ -87,6 +88,7 @@ export function generateOrderExample(
     };
   return {
     status: 'generated',
+    integrationPolicy,
     environment: sandbox,
     payload,
     validation: result,

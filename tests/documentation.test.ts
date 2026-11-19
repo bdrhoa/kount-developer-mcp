@@ -74,3 +74,62 @@ describe('readiness is a self assessment', () => {
     expect(result.ready).toBeNull();
   });
 });
+
+describe('general merchant integration policy', () => {
+  it.each(topics)('delivers client retry and fallback instructions for %s', (topic) => {
+    const result = new DocumentationService().get(topic);
+    if (result.status !== 'available') throw new Error('Missing guidance');
+    expect(result.integrationPolicy).toMatchObject({
+      authority: 'maintainer_requested',
+      retries: {
+        implementation: expect.stringContaining('established retry library'),
+        maxRetries: { env: 'KOUNT_MAX_RETRIES', default: 2, min: 0, max: 3 },
+      },
+      evaluationFallback: {
+        env: 'KOUNT_FALLBACK_DECISION',
+        default: 'APPROVE',
+        allowed: ['APPROVE', 'DECLINE'],
+        appliesTo: 'Evaluate Order POST with riskInquiry=true only',
+      },
+    });
+    expect(result.integrationPolicy.retries.strategy).toContain('jitter');
+    expect(result.integrationPolicy.evaluationFallback.effects).toContain('REVIEW');
+  });
+  it('compares client UI inventory against all declared ENV keys and policy settings', () => {
+    const result = checkIntegrationReadiness({
+      capabilities: [],
+      configuration: {
+        configurationUiAvailable: true,
+        environmentSettingKeys: ['PAYMENT_WEBHOOK_SECRET', 'KOUNT_CHANNEL'],
+        uiSettingKeys: ['KOUNT_CLIENT_ID', 'KOUNT_API_KEY', 'KOUNT_CHANNEL'],
+      },
+    });
+    expect(result.configurationUiCoverage).toMatchObject({
+      status: 'caller_reported_comparison',
+      missingFromUi: ['KOUNT_MAX_RETRIES', 'KOUNT_FALLBACK_DECISION', 'PAYMENT_WEBHOOK_SECRET'],
+    });
+    expect(result.ready).toBeNull();
+  });
+  it('does not require a configuration UI for ENV-only integrations', () => {
+    const result = checkIntegrationReadiness({
+      capabilities: [...capabilities],
+      configuration: { configurationUiAvailable: false },
+    });
+    expect(result.failed).toEqual([]);
+    expect(result.manual.some((check) => (check.id as string) === 'configuration_ui')).toBe(false);
+    expect(result.integrationPolicy.configuration.ui).toContain(
+      'Creating a configuration UI is not required',
+    );
+  });
+  it('distinguishes missing UI evidence from applications without a UI', () => {
+    expect(checkIntegrationReadiness({ capabilities: [] }).configurationUiCoverage.status).toBe(
+      'unverified',
+    );
+    expect(
+      checkIntegrationReadiness({
+        capabilities: [],
+        configuration: { configurationUiAvailable: false },
+      }).configurationUiCoverage.status,
+    ).toBe('not_applicable');
+  });
+});

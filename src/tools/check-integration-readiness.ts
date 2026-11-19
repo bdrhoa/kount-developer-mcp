@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { integrationPolicy } from '../resources/v2/integration-policy.js';
 import { assessHostedCheckout, hostedCheckoutEvidence } from './hosted-checkout-evidence.js';
 import {
   capabilities,
@@ -10,6 +11,8 @@ import {
 import type { Capability } from '../resources/v2/knowledge.js';
 import { sandbox } from '../resources/v2/environment.js';
 import type { CredentialStatus } from '../services/credentials.js';
+
+const settingKeys = z.array(z.string().regex(/^[A-Z][A-Z0-9_]{0,99}$/)).max(100);
 
 export const readinessInput = z.strictObject({
   hostedCheckout: hostedCheckoutEvidence.optional(),
@@ -26,6 +29,11 @@ export const readinessInput = z.strictObject({
       authorizationFlow: z.enum(['pre', 'post']).optional(),
       webhooksEnabled: z.boolean().optional(),
       deviceCollection: z.enum(['enabled', 'excluded']).optional(),
+      maxRetries: z.number().int().min(0).max(3).optional(),
+      fallbackDecision: z.enum(['APPROVE', 'DECLINE']).optional(),
+      configurationUiAvailable: z.boolean().optional(),
+      environmentSettingKeys: settingKeys.optional(),
+      uiSettingKeys: settingKeys.optional(),
     })
     .optional(),
 });
@@ -64,10 +72,42 @@ export function checkIntegrationReadiness(
     failed,
     manual,
     configuration,
+    integrationPolicy,
+    configurationUiCoverage:
+      configuration.configurationUiAvailable === false
+        ? { status: 'not_applicable' as const, evidence: 'caller_reported_only' }
+        : configuration.configurationUiAvailable &&
+            configuration.environmentSettingKeys &&
+            configuration.uiSettingKeys
+          ? {
+              status: 'caller_reported_comparison' as const,
+              missingFromUi: [
+                ...new Set([
+                  'KOUNT_CLIENT_ID',
+                  'KOUNT_API_KEY',
+                  'KOUNT_MAX_RETRIES',
+                  'KOUNT_FALLBACK_DECISION',
+                  ...configuration.environmentSettingKeys,
+                ]),
+              ].filter((key) => !configuration.uiSettingKeys!.includes(key)),
+              limitation:
+                'Compares setting names only. Completeness of the supplied ENV inventory, validation, persistence and secret handling require source review and tests.',
+            }
+          : {
+              status: 'unverified' as const,
+              reason:
+                'UI coverage is optional and applies only to an existing configuration UI. Otherwise use ENV variables normally; creating a UI is not required.',
+            },
     ...(input.hostedCheckout ? { hostedCheckout: assessHostedCheckout(input.hostedCheckout) } : {}),
     guidancePrecedence,
     configurationNotes: [
       'Configuration and evidence are caller-reported. Confirm applicability and outcomes in the target integration.',
+      'Verify library-backed exponential backoff with jitter for every API operation and ENV-configurable KOUNT_MAX_RETRIES and KOUNT_FALLBACK_DECISION. Test both evaluation fallback outcomes and confirm other API failures remain failures.',
+      ...(configuration.configurationUiAvailable
+        ? [
+            'Audit the configuration UI against every ENV setting used by enabled integration features, including retry and fallback settings; test save errors, validation, secret masking and effective configuration precedence.',
+          ]
+        : []),
       ...(configuration.authorizationFlow === 'pre'
         ? [
             'Verify that evaluation precedes the card authorization request and that Update Order PATCH reports the authorization outcome.',

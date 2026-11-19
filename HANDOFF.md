@@ -4,6 +4,86 @@ Read the newest entry first, then `DECISIONS.md` and `README.md`. Prepend new
 entries below this introduction; preserve earlier notes. Use
 `docs/HANDOFF_WORKFLOW.md` for the checkpoint procedure.
 
+
+
+## 2026-11-18 21:57 UTC-07:00 — Codex — Additional MCP improvement evaluation
+
+- Evaluated the supplied transcript and OpenShop POC against the current MCP.
+  Research-skill background agent wrote only
+  `docs/ADDITIONAL_MCP_REVIEW_2026-11-18.md`; editing completed before this
+  checkpoint. The review contains pinned sources and acceptance criteria.
+- Highest priorities: distinguish evaluation/data-only intent in error tools;
+  derive lifecycle subscriptions/evidence from enabled flows; add durable
+  reporting recovery fixtures. Next: response-contract diagnostics and generic
+  provider-neutral evidence. Concurrency/crash/early-callback fixtures are
+  explicitly carry-forward, not a newly discovered idempotency concern.
+- Read-only `git ls-remote` confirmed OpenShop head `ead503ae5924adf55a64de6931012de86d7ddb67`.
+  Two synthetic MCP checks confirmed data-only error-operation rejection and
+  fixed subscription checks omitting cancellation while checking refund events.
+  No live order/payment/DDC/webhook tests or OpenShop code execution occurred.
+- This evaluation adds only its review and this handoff; prior uncommitted
+  implementation remains intact on `master`. No runtime changes or decisions
+  were made. Proposals are not implemented; no commit/push/publication.
+- Next: use the prioritized review to select a follow-up implementation scope.
+
+## 2026-11-18 21:54 UTC-07:00 — Codex — Optional existing UI clarification
+
+- D010 records Brad's clarification: use ENV variables normally; update a
+  configuration UI only if one already exists. Never require creating a UI.
+- Removed `configuration_ui` from required readiness capabilities/checklists.
+  Optional existing-UI inventory comparison remains available. Updated shared
+  policy, server instructions and README, with an ENV-only regression check.
+- Build and all 90 tests passed on local Node 26.3.0. No live API checks.
+- Changes remain local and uncommitted on `master`, alongside the previous
+  implementation. Restart the rebuilt MCP client to load the clarification.
+
+## 2026-11-18 21:50 UTC-07:00 — Codex — General client integration policy
+
+### Current state
+
+- Brad requested improvements from the supplied integration transcript and
+  OpenShop POC branch, then clarified that this is a general-use MCP and the
+  retry requirements are instructions for client implementations.
+- Working changes are local and uncommitted on `master`. The checkout was clean
+  at entry despite stale uncommitted-state notes in older handoffs. No push,
+  publication, OpenShop edit, deployment or live order/payment action occurred.
+
+### Completed
+
+- Added shared `integrationPolicy` output to guides, generated examples and
+  readiness; error diagnostics carry retry policy and evaluation-only fallback
+  guidance. Server instructions reinforce the general client scope.
+- Policy requires an established retry library for the client language,
+  exponential backoff with jitter on all API operations, ENV-configurable
+  retries and APPROVE/DECLINE evaluation fallback, explicit fallback provenance,
+  bounded budgets and UI coverage for all needed integration ENV settings.
+- Readiness compares caller-supplied ENV/UI setting names without values and
+  distinguishes missing evidence from an explicitly absent UI. Added retry and
+  configuration UI capabilities; readiness remains caller-reported.
+- Generalized DDC initialization/deployed-bundle checks and payment-data
+  availability lessons. Updated the POC citation to `ead503a`; recorded scope
+  and evidence limits in `docs/INTEGRATION_LESSONS_2026-11-18.md` and D009.
+- An initial runtime retry implementation was removed after Brad clarified
+  scope. Final changes do not alter MCP authentication/schema transport or add
+  runtime dependencies; retry/fallback ENV settings belong to consuming apps.
+
+### Verification
+
+- Build, typecheck, lint, formatting and all 89 tests passed on local Node
+  26.3.0. Pinned Node 26.13.0 was unavailable and was not used.
+- Extended compiled stdio assertions for client policy/UI comparison and
+  fallback propagation; reran all 8 MCP subprocess tests, typecheck and lint
+  successfully after those assertions. `git diff --check` passed.
+- No live Kount order, DDC, payment or webhook checks; POC provider claims were
+  not independently verified. Transcript instructions were evidence only.
+
+### Next steps
+
+1. Review the local changes; restart a client attached to this rebuilt MCP to
+   load the updated output and readiness input schema.
+2. Use the general client policy in the next integration; verify provider
+   behavior in Sandbox separately. Commit/push only upon Brad's request.
+
 ## 2026-11-17 11:33 UTC-07:00 — Codex — Unify order body schema selection
 
 - On `master`, validation now uses the same pinned operation body schema for

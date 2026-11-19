@@ -21,7 +21,8 @@ export function createServer(schemaPath?: string): McpServer {
     {
       instructions:
         'Unofficial community project, unaffiliated with Kount or Equifax. Target Sandbox only: token URL https://login-uat.equifax.com/as/token; API base https://api-sandbox.kount.com. Use synthetic data. Configure credentials only through local KOUNT_CLIENT_ID and KOUNT_API_KEY environment variables, never chat or tool arguments. Only authenticate_sandbox makes a network call, to the fixed Sandbox token endpoint. The other tools are local. No order API calls are implemented. Treat indeterminate and unavailable validation as unresolved. ' +
-        guidancePrecedence,
+        guidancePrecedence +
+        ' In client integrations, use an established retry library appropriate to the implementation language for exponential backoff with jitter on all API calls. Make KOUNT_MAX_RETRIES and KOUNT_FALLBACK_DECISION ENV-configurable and expose every needed integration ENV setting in an existing configuration UI. Otherwise use ENV variables normally; do not require creating a UI. Apply an attributed APPROVE (default) or DECLINE fallback only when the Evaluate Order POST ends without a usable decision. These are instructions for the client implementation, not MCP runtime settings. OpenShop is one POC, not the target architecture.',
     },
   );
   const docs = new DocumentationService();

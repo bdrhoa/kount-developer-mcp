@@ -220,6 +220,24 @@ describe('MCP over actual stdio', () => {
         },
       });
 
+      expect(
+        await call('check_integration_readiness', {
+          capabilities: ['retry_policy'],
+          configuration: {
+            configurationUiAvailable: true,
+            environmentSettingKeys: ['PROVIDER_WEBHOOK_SECRET'],
+            uiSettingKeys: ['KOUNT_CLIENT_ID', 'KOUNT_API_KEY', 'KOUNT_MAX_RETRIES'],
+          },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          configurationUiCoverage: {
+            missingFromUi: ['KOUNT_FALLBACK_DECISION', 'PROVIDER_WEBHOOK_SECRET'],
+          },
+          integrationPolicy: { authority: 'maintainer_requested' },
+        },
+      });
+
       const retryContext = {
         failurePhase: 'awaiting_response',
         correlationId: 'redacted-correlation',
@@ -241,6 +259,7 @@ describe('MCP over actual stdio', () => {
             action: 'reconcile_before_replay',
             priorOutcome: 'unknown',
             worstCaseMs: 1600,
+            fallback: { env: 'KOUNT_FALLBACK_DECISION', default: 'APPROVE' },
           },
         },
       });

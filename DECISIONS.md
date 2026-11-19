@@ -111,3 +111,31 @@ with a link to their replacement.
 - **Decision:** Use GitHub Issues in `bdrhoa/kount-developer-mcp`, the five
   default triage labels, and a single domain context. Keep the configuration
   pointers in the shared `AGENTS.md` and the instructions in `docs/agents/`.
+
+## D009 — General client integration policy, informed by POCs
+
+- **Date:** 2026-11-18
+- **Status:** Accepted
+- **Authority:** Brad requested transcript/repository improvements, then clarified
+  that OpenShop is only a POC and retry requirements are instructions for clients
+  using this MCP to implement Kount.
+- **Decision:** Keep the MCP general-purpose. Deliver language-neutral client
+  instructions for established-library retries with exponential backoff and
+  jitter on all API operations. Require ENV-configurable retry count and
+  evaluation-only APPROVE/DECLINE fallback, with all needed integration ENV
+  settings covered by any available client configuration UI. Publish this as
+  maintainer-requested policy, separate from vendor contract assertions.
+- **Implementation defaults:** Use the POC's 0–3 additional retries (default 2)
+  and APPROVE default, with DECLINE selectable. Preserve unknown remote outcomes
+  and separately attribute local fallbacks. These settings do not configure the
+  MCP runtime. D004's order-operation scope remains unchanged.
+
+## D010 — Existing configuration UIs only
+
+- **Date:** 2026-11-18
+- **Status:** Accepted; clarifies D009's configuration UI scope.
+- **Authority:** Brad explicitly clarified that a configuration UI is not a
+  requirement: update one only when it already exists; otherwise use ENV vars.
+- **Decision:** Do not require creation of a UI or mark an ENV-only integration
+  incomplete for lacking one. Keep UI inventory comparison optional, applying
+  only to existing client configuration UIs.

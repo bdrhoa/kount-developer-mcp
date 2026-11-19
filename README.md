@@ -218,6 +218,46 @@ declared authorization flow, DDC, and webhooks. The guide prioritizes
 maintainer-confirmed guidance within its stated scope and surfaces conflicts
 with vendor documentation.
 
+### Client implementation policy
+
+The MCP is general-purpose. OpenShop is a POC reference for one hosted Stripe
+Checkout flow, not a required architecture or payment provider. The integration
+guide and generated examples return `integrationPolicy` as structured
+**maintainer-requested client implementation instructions**, separate from vendor
+contract assertions. Error diagnostics include operation-specific retry and
+fallback guidance; readiness exposes the same policy.
+
+In the **consuming merchant application**, use an established retry library for
+its language to implement exponential backoff with jitter for every API operation,
+including token acquisition, evaluation, data-only orders, reads, updates and
+reversals. Bound attempts, authentication refresh and sleeps to a total deadline;
+honor `Retry-After` and distinguish permanent rejections from transient failures.
+Do not multiply nested retry budgets. An uncertain POST can create a duplicate;
+reconcile with a known Kount order ID when possible and retain unknown outcomes.
+
+| Client ENV variable       | Instructions                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| `KOUNT_MAX_RETRIES`       | Integer 0–3, default 2; retries exclude the initial attempt.                     |
+| `KOUNT_FALLBACK_DECISION` | `APPROVE` (default) or `DECLINE` when evaluation ends without a usable decision. |
+
+A valid `REVIEW` is not a failure. Persist fallback provenance and the reason
+before payment side effects, and use the application's normal decision flow.
+Token, data-only, GET, PATCH and reversal failures remain failures. Invalid
+configuration should produce a clear error. Use ENV variables normally; a configuration UI is not required. If a client
+configuration UI already exists, update it to include all ENV settings needed by enabled integration features, with
+matching validation, defaults, secret protection and documented precedence.
+These variables are instructions for client implementations; they do not
+configure this MCP process, which still implements token acquisition only.
+
+Readiness adds the `retry_policy` capability; UI coverage is an optional check. Optional
+`configuration` accepts `maxRetries`, `fallbackDecision`, and
+`configurationUiAvailable`. Supply `environmentSettingKeys` and `uiSettingKeys`
+as arrays of ENV-style setting names **without values** to compare a declared
+client UI inventory against its ENV inventory and the required policy settings.
+Missing UI evidence is `unverified`; an explicitly absent UI is `not_applicable`.
+The comparison cannot establish that the supplied ENV inventory is complete or
+that settings are saved and applied correctly.
+
 Example prompts:
 
 - “Explain the Sandbox authentication setup and authenticate using my local configuration.”

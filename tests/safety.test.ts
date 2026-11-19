@@ -114,6 +114,29 @@ describe('error explanation', () => {
       ).observed,
     ).toEqual({ responseShape: 'wrapped_commerce_shape', codeMatchesStatus: false });
   });
+  it.each(['token', 'update_order', 'get_order', 'batch_update_reversals'])(
+    'keeps evaluation fallback out of %s failures',
+    (operation) => {
+      const result = explainApiError({ operation, httpStatus: 503 }, validation);
+      expect(result.retry?.fallback).toMatchObject({ applies: false });
+      expect(result.retry?.policy.implementation).toContain('established retry library');
+    },
+  );
+  it('preserves uncertain evaluation outcomes while giving a separate local fallback policy', () => {
+    const result = explainApiError(
+      { operation: 'evaluate_order', retryContext: { failurePhase: 'awaiting_response' } },
+      validation,
+    );
+    expect(result.retry).toMatchObject({
+      priorOutcome: 'unknown',
+      fallback: {
+        env: 'KOUNT_FALLBACK_DECISION',
+        default: 'APPROVE',
+        allowed: ['APPROVE', 'DECLINE'],
+      },
+    });
+    expect(result.retry?.guidance).toContain('do not assume merchantOrderId lookup');
+  });
   it('marks undocumented statuses without inventing Kount behavior', () => {
     expect(explainApiError({ httpStatus: 418, responseBody: null }, validation)).toMatchObject({
       documented: false,

@@ -59,8 +59,8 @@ export const sources: Record<string, Source> = {
   },
   openShopHostedCheckout: {
     id: 'openShopHostedCheckout',
-    url: 'https://github.com/bdrhoa/OpenShop/blob/0e3d89a72eb866a9d90bd63f8c42b1c6ea59a245/docs/KOUNT.md',
-    verifiedAt: '2026-11-16',
+    url: 'https://github.com/bdrhoa/OpenShop/blob/ead503ae5924adf55a64de6931012de86d7ddb67/docs/KOUNT.md',
+    verifiedAt: '2026-11-18',
     apiVersion: '2.0.0',
     kind: 'reference_example',
   },
@@ -111,6 +111,7 @@ export const guidance: Record<Topic, Guidance> = {
       'Check order.riskInquiry[0].device.id when testing collection. Use the hostedCheckout readiness evidence to compare the browser, Stripe and Kount session IDs and report reuse separately.',
       'Maintainer guidance: create a fresh DDC ID for each new browser session. Keep it through navigation and checkout handoff within that session. Test browser session restoration and confirm any reuse across separate risk inquiries.',
       'Checkout-only collection can work when the merchant controls that page and all buyers reach it before payment. With direct links to hosted Stripe Checkout, as in OpenShop, start DDC on every eligible storefront entry, including deep links. Test SDK loading, CSP, redirects, and device attachment on the evaluated order.',
+      'Verify collection configuration separately from server-side screening: client initialization, environment, CSP, SDK callbacks, and a bounded wait before redirecting to hosted payment. Check the deployed browser bundle, not just source code. Missing client configuration, failed SDK loading, and missing device attachment are distinct failures.',
       'The guide documents excludeDevice=true when collection cannot represent the actual end user, such as a call-center or kiosk flow.',
     ],
     sourceIds: ['integration', 'commerce'],
@@ -123,7 +124,8 @@ export const guidance: Record<Topic, Guidance> = {
     recommendations: [
       'Maintainer guidance: prefer pre-authorization risk evaluation when the checkout flow permits it to help protect against card testing. Call Kount before requesting card authorization. For OpenShop hosted Stripe Checkout, evaluate after authorization and before capture because the merchant lacks a pre-authorization hook in that flow.',
       'OpenShop reports a hosted-checkout issuer decline as REFUSED / DECLINED and a Radar block as REFUSED / UNKNOWN in a data-only POST. A Radar block occurs before issuer authorization. Do not decide order or authorization state from the spelling of a Kount risk decision.',
-      'Use bounded backoff for transient failures and honor rate limits. Reconcile uncertain outcomes before retrying writes. Test simultaneous duplicate deliveries and timeouts after the provider has accepted a request. Keep failures separate from fraud approvals.',
+      'Apply the maintainer-requested integrationPolicy: use an established language-appropriate library for exponential backoff with jitter on all API calls, configure KOUNT_MAX_RETRIES and KOUNT_FALLBACK_DECISION through ENV and any available configuration UI, and apply a separately attributed APPROVE or DECLINE fallback only when evaluation ends without a usable decision. Reconcile uncertain writes when possible and retain duplicate risk when replaying.',
+      'Use payment data actually exposed by the payment provider. A provider fingerprint is not automatically a Kount-compatible payment token. Do not invent BIN or issuer values from last4, test card identity or dashboards; omit unavailable optional fields and verify provider support and Kount token semantics separately.',
       'Supply relevant known order data. Monetary strings such as orderTotal use the lowest currency denomination.',
       'Include postalCode and countryCode when supplying addresses, following the guide’s accuracy advice.',
     ],
@@ -249,6 +251,7 @@ export const capabilities = [
   'webhook_verification',
   'webhook_replay_protection',
   'error_handling',
+  'retry_policy',
   'security',
 ] as const;
 export type Capability = (typeof capabilities)[number];
@@ -320,6 +323,13 @@ export const checklist: {
     description:
       'Handle token and Orders errors by operation. Verify bounded retries for transient failures, rate limits, and reconciliation before repeating writes with uncertain outcomes.',
     sourceIds: ['errors', 'integration', 'referencePayment'],
+    kind: 'recommendation',
+  },
+  {
+    id: 'retry_policy',
+    description:
+      'All API operations use a language-appropriate retry library with exponential backoff, jitter, bounded budgets, and tested ENV-configurable evaluation-only fallback provenance.',
+    sourceIds: ['integration'],
     kind: 'recommendation',
   },
   {
