@@ -139,3 +139,13 @@ with a link to their replacement.
 - **Decision:** Do not require creation of a UI or mark an ENV-only integration
   incomplete for lacking one. Keep UI inventory comparison optional, applying
   only to existing client configuration UIs.
+
+## D011 — Commit and implement the five reviewed improvements
+
+- **Date:** 2026-11-18
+- **Status:** Accepted; supersedes D005's no-commit/no-push restriction for this work.
+- **Authority:** Brad requested committing current changes, implementing the five
+  additional improvements sequentially with separate commits, then syncing.
+- **Decision:** Implement diagnostic intent, flow-specific evidence, durable
+  reporting recovery guidance, response diagnostics/fixtures and provider-neutral
+  readiness. Keep authenticated order operations outside scope under D004.

@@ -165,7 +165,10 @@ configured or exercised by this build.
 | `authenticate_sandbox`        | `{}`                                                                                               | **Network-enabled:** obtains/caches a Sandbox token from local credentials; returns status and expiry only         |
 
 `explain_api_error` accepts an optional `operation` for token and Commerce
-diagnostics. Use `token` for token acquisition failures or one of the schema
+diagnostics. Supply `request` (the same descriptor used by validation) to distinguish
+evaluation from data-only POSTs. The `data_only_order` operation alias is also
+accepted. Evaluation fallback applicability is unverified when POST intent is
+omitted, and contradictory operation/mode/query inputs are blocked. Use `token` for token acquisition failures or one of the schema
 operation names below. Payload validation applies to Evaluate Order and Update
 Order requests. For a transport failure without an HTTP response, set
 `retryContext.failurePhase` to `before_send` or `awaiting_response`. Supply

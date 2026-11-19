@@ -4,11 +4,13 @@ import { sources } from '../resources/v2/knowledge.js';
 import { object } from '../services/schema.js';
 import type { ValidationService } from '../services/validation.js';
 import { sandbox } from '../resources/v2/environment.js';
+import { orderRequest, checkOrderRequest } from './validate-order-payload.js';
 import { operations } from '../schemas/v2/manifest.js';
 
 export const errorInput = z.strictObject({
   httpStatus: z.number().int().min(100).max(599).optional(),
-  operation: z.enum(['token', ...Object.keys(operations)]).optional(),
+  operation: z.enum(['token', 'data_only_order', ...Object.keys(operations)]).optional(),
+  request: orderRequest.optional(),
   responseBody: z.json().optional(),
   requestPayload: z.record(z.string(), z.json()).optional(),
   retryContext: z
@@ -32,9 +34,17 @@ export const errorInput = z.strictObject({
 });
 
 function assessRetry(input: z.infer<typeof errorInput>) {
-  const { operation, httpStatus, retryContext } = input;
+  const { httpStatus, retryContext } = input;
+  const operation =
+    input.operation ??
+    (input.request
+      ? input.request.mode === 'status_update'
+        ? 'update_order'
+        : 'evaluate_order'
+      : undefined);
   const write =
     operation === 'evaluate_order' ||
+    operation === 'data_only_order' ||
     operation === 'update_order' ||
     operation === 'batch_update_reversals';
   const transient =
@@ -90,12 +100,12 @@ function assessRetry(input: z.infer<typeof errorInput>) {
       ? 'Reconcile with a known Kount order ID when available; do not assume merchantOrderId lookup or idempotency. Bounded replay may create duplicates. Keep the prior outcome unknown even when applying a local evaluation fallback.'
       : 'Bound authentication, attempts and backoff to the remaining deadline. Honor Retry-After when supplied.',
     fallback:
-      operation === 'evaluate_order'
+      operation === 'evaluate_order' && input.request?.mode === 'evaluation'
         ? integrationPolicy.evaluationFallback
         : {
-            applies: false,
+            applies: operation === 'evaluate_order' && !input.request ? null : false,
             guidance:
-              'No evaluation fallback applies to this operation. Preserve the error and arrange recovery.',
+              'Fallback requires explicit evaluation intent (POST riskInquiry=true). Other operations preserve errors for recovery; omitted POST intent remains unverified.',
           },
   };
 }
@@ -152,6 +162,20 @@ const documented: Record<number, { meaning: string; hypotheses: string[]; steps:
   },
 };
 export function explainApiError(input: z.infer<typeof errorInput>, validation: ValidationService) {
+  const requestErrors = input.request ? checkOrderRequest(input.request) : [];
+  if (input.request) {
+    const expected = input.request.mode === 'status_update' ? 'update_order' : 'evaluate_order';
+    if (
+      input.operation &&
+      input.operation !== expected &&
+      !(input.operation === 'data_only_order' && input.request.mode === 'data_only')
+    )
+      requestErrors.push({
+        path: 'operation',
+        code: 'request_operation_mismatch',
+        message: 'Operation conflicts with request intent.',
+      });
+  }
   const missingFailure =
     input.httpStatus === undefined &&
     input.retryContext?.failurePhase !== 'before_send' &&
@@ -191,11 +215,16 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
           : null,
   };
   return {
+    ...(requestErrors.length
+      ? { status: 'blocked', reason: 'Request intent is inconsistent.', errors: requestErrors }
+      : {}),
     ...(missingFailure
       ? { status: 'blocked', reason: 'Provide an HTTP status or the phase of a transport failure.' }
       : {}),
     httpStatus: input.httpStatus ?? null,
-    ...(!missingFailure && (input.operation || input.retryContext)
+    ...(!missingFailure &&
+    !requestErrors.length &&
+    (input.operation || input.request || input.retryContext)
       ? { retry: assessRetry(input) }
       : {}),
     ...(input.operation ? { operation: input.operation } : {}),
@@ -214,7 +243,10 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
     ],
     observed,
     ...(input.requestPayload &&
-    (!input.operation || input.operation === 'evaluate_order' || input.operation === 'update_order')
+    (!input.operation ||
+      input.operation === 'evaluate_order' ||
+      input.operation === 'data_only_order' ||
+      input.operation === 'update_order')
       ? {
           payloadValidation: validation.validate(
             input.requestPayload,

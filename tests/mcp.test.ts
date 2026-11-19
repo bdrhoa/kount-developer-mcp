@@ -251,6 +251,7 @@ describe('MCP over actual stdio', () => {
       };
       const uncertain = await call('explain_api_error', {
         operation: 'evaluate_order',
+        request: { mode: 'evaluation', method: 'POST', query: { riskInquiry: true } },
         retryContext,
       });
       expect(uncertain).toMatchObject({

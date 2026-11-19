@@ -124,7 +124,11 @@ describe('error explanation', () => {
   );
   it('preserves uncertain evaluation outcomes while giving a separate local fallback policy', () => {
     const result = explainApiError(
-      { operation: 'evaluate_order', retryContext: { failurePhase: 'awaiting_response' } },
+      {
+        operation: 'evaluate_order',
+        request: { mode: 'evaluation', method: 'POST', query: { riskInquiry: true } },
+        retryContext: { failurePhase: 'awaiting_response' },
+      },
       validation,
     );
     expect(result.retry).toMatchObject({

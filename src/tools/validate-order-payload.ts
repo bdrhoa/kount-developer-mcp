@@ -31,6 +31,20 @@ export function validateOrderPayload(
 
   const patch = request.mode === 'status_update';
   const body = validation.validate(input.payload, patch ? 'update_order' : 'evaluate_order');
+  const requestErrors = checkOrderRequest(request);
+
+  return {
+    ...body,
+    ...(requestErrors.length ? { valid: false as const, status: 'invalid' as const } : {}),
+    errors: [...requestErrors, ...body.errors],
+    mode: request.mode,
+    bodySchemaStatus: body.status,
+    providerBehavior: 'unverified',
+  };
+}
+
+export function checkOrderRequest(request: z.infer<typeof orderRequest>): Finding[] {
+  const patch = request.mode === 'status_update';
   const requestErrors: Finding[] = [];
   const issue = (path: string, message: string) =>
     requestErrors.push({ path, code: 'request_operation_mismatch', message });
@@ -56,12 +70,5 @@ export function validateOrderPayload(
       'Use riskInquiry=false or omit it for data-only submission.',
     );
 
-  return {
-    ...body,
-    ...(requestErrors.length ? { valid: false as const, status: 'invalid' as const } : {}),
-    errors: [...requestErrors, ...body.errors],
-    mode: request.mode,
-    bodySchemaStatus: body.status,
-    providerBehavior: 'unverified',
-  };
+  return requestErrors;
 }

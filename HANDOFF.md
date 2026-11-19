@@ -6,6 +6,16 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-18 22:12 UTC-07:00 — Codex — Improvement 1: request intent
+
+- Committed the initial working tree as `d7f67d5`, per Brad's request. D011
+  authorizes five sequential implementation commits and final sync.
+- Error diagnostics now accept the shared request descriptor and data-only alias,
+  block conflicting intents, and avoid assuming fallback applicability for an
+  unspecified POST intent. Shared request checks also serve payload validation.
+- Typecheck and all 93 tests passed on Node 26.3.0; no live requests.
+- Next: flow-specific lifecycle evidence, then improvements 3–5 and final sync.
+
 ## 2026-11-18 21:57 UTC-07:00 — Codex — Additional MCP improvement evaluation
 
 - Evaluated the supplied transcript and OpenShop POC against the current MCP.
