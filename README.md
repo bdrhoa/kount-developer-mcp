@@ -197,6 +197,14 @@ validating a request. Copy those fields from the generated request descriptor.
 Body-only validation still uses the original POST schema.
 A schema pass leaves provider behavior unverified.
 
+Hosted evidence optionally declares `flow: { authorizationHold, failedAttempts,
+refunds }` and `lifecycleEvent` (`authorized_checkout`, `authorization_refused`,
+`authorization_canceled`, `authorization_expired`, `refund_succeeded`,
+`refund_pending`, or `refund_failed`). Subscription checks are conditional;
+undeclared paths remain unverified and explicitly disabled paths are not
+applicable. Non-evaluation deliveries can be assessed without a risk decision.
+Expiry must come from provider evidence, not merely a cancellation event name.
+
 For hosted Stripe Checkout, pass a consistent set of redacted checkout,
 PaymentIntent, event, endpoint, and order identifiers in `hostedCheckout`.
 Provide both revisions to check deployment drift and the expected and observed

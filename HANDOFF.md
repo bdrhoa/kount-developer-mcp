@@ -6,6 +6,17 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-18 22:13 UTC-07:00 — Codex — Improvement 2: lifecycle evidence
+
+- Added optional declared flow features and lifecycle events to hosted evidence;
+  subscriptions now include cancellation, conditionally assess refunds/failures,
+  and distinguish undeclared from disabled paths. Refused/expired/refund events
+  can be correlated without a completed checkout or a Kount risk decision.
+- Added generic refused/cancellation/expiry acceptance fixtures. Typecheck and
+  all 97 tests passed on Node 26.3.0. No live requests.
+- Next: durable reporting recovery guidance (3), response diagnostics (4),
+  provider-neutral evidence (5), then sync.
+
 ## 2026-11-18 22:12 UTC-07:00 — Codex — Improvement 1: request intent
 
 - Committed the initial working tree as `d7f67d5`, per Brad's request. D011

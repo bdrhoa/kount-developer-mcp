@@ -1,9 +1,17 @@
 import { z } from 'zod';
+import {
+  lifecycleFlow,
+  lifecycleEvents,
+  lifecyclePaymentStates,
+  stripeLifecycleEvents,
+} from '../resources/v2/lifecycle.js';
 
 const identifier = z.string().trim().min(1).max(200);
 const deliveryOutcome = ['accepted', 'signature_rejected', 'not_configured', 'skipped'] as const;
 
 export const hostedCheckoutEvidence = z.strictObject({
+  flow: lifecycleFlow.optional(),
+  lifecycleEvent: z.enum(lifecycleEvents).optional(),
   checkoutId: identifier,
   paymentIntentId: identifier,
   expectedRevision: identifier.optional(),
@@ -40,6 +48,8 @@ export const hostedCheckoutEvidence = z.strictObject({
     .strictObject({
       paymentIntentId: identifier,
       state: z.enum([
+        'refused',
+        'expired',
         'authorized',
         'captured',
         'canceled',
@@ -74,6 +84,8 @@ function observed(value: boolean | undefined) {
 
 export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidence>) {
   const { delivery, endpoint, kountOrder, payment, device } = input;
+  const lifecycleEvent = input.lifecycleEvent ?? 'authorized_checkout';
+  const evaluating = lifecycleEvent === 'authorized_checkout';
   const endpointId = input.expectedEndpointId ?? endpoint?.id;
   const endpointMatch =
     endpoint && input.expectedEndpointId ? endpoint.id === input.expectedEndpointId : undefined;
@@ -84,7 +96,7 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
   const checkoutDelivery = delivery
     ? delivery.checkoutId === input.checkoutId &&
       delivery.paymentIntentId === input.paymentIntentId &&
-      delivery.eventType === 'checkout.session.completed' &&
+      delivery.eventType === stripeLifecycleEvents[lifecycleEvent] &&
       (endpointId === undefined || delivery.endpointId === endpointId)
     : undefined;
   const accepted =
@@ -98,7 +110,7 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
           ? true
           : undefined;
   const evaluation =
-    kountOrder && delivery
+    evaluating && kountOrder && delivery
       ? kountOrder.eventId !== delivery.eventId || checkoutDelivery === false
         ? false
         : accepted === true && input.holdMarker === true
@@ -111,7 +123,11 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
       ? payment?.reviewerDecision
       : undefined;
   const fallback =
-    !kountOrder && accepted === true && input.holdMarker === true && paymentMatch === true
+    evaluating &&
+    !kountOrder &&
+    accepted === true &&
+    input.holdMarker === true &&
+    paymentMatch === true
       ? payment?.fallbackDecision
       : undefined;
   const decision = fallback ?? reviewer ?? (evaluation === true ? kountOrder?.decision : undefined);
@@ -139,12 +155,28 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
         : payment.fulfillmentAllowed === (decision === 'APPROVE' && paymentOutcome === true);
   }
 
+  if (!evaluating && payment && paymentMatch === true && accepted === true) {
+    paymentOutcome = lifecyclePaymentStates[lifecycleEvent]?.includes(payment.state);
+    fulfillment =
+      payment.fulfillmentAllowed === undefined ? undefined : payment.fulfillmentAllowed === false;
+  }
+  const subscription = (event: string, applicable: boolean | undefined) => [
+    event,
+    applicable === false
+      ? 'not_applicable'
+      : applicable === undefined
+        ? 'unverified'
+        : observed(
+            endpointMatch !== false ? endpoint?.subscribedEvents.includes(event) : undefined,
+          ),
+  ];
   const deviceOrderMatch =
     device?.kountOrderId && kountOrder ? device.kountOrderId === kountOrder.orderId : undefined;
   const deviceOrderCorrelated = deviceOrderMatch === true && evaluation === true;
   const kountSession = deviceOrderCorrelated ? device?.kountSessionId : undefined;
   return {
     evidence: 'caller_reported_only',
+    lifecycleEvent,
     checks: {
       deploymentRevision: observed(
         input.expectedRevision && input.deployedRevision
@@ -153,23 +185,17 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
       ),
       endpoint: observed(endpointMatch),
       endpointTarget: observed(endpointTargetMatch),
-      subscriptions: Object.fromEntries(
-        [
-          'checkout.session.completed',
-          'payment_intent.payment_failed',
-          'refund.updated',
-          'refund.failed',
-        ].map((event) => [
-          event,
-          observed(
-            endpointMatch !== false ? endpoint?.subscribedEvents.includes(event) : undefined,
-          ),
-        ]),
-      ),
+      subscriptions: Object.fromEntries([
+        subscription('checkout.session.completed', true),
+        subscription('payment_intent.payment_failed', input.flow?.failedAttempts),
+        subscription('payment_intent.canceled', input.flow?.authorizationHold),
+        subscription('refund.updated', input.flow?.refunds),
+        subscription('refund.failed', input.flow?.refunds),
+      ]),
       checkoutHold: observed(input.holdMarker),
       checkoutDelivery: observed(checkoutDelivery),
       webhookProcessing: observed(accepted),
-      kountEvaluation: observed(evaluation),
+      kountEvaluation: evaluating ? observed(evaluation) : 'not_applicable',
       paymentCorrelation: observed(paymentMatch),
       paymentOutcome: observed(paymentOutcome),
       fulfillment: observed(fulfillment),

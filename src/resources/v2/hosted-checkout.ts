@@ -1,7 +1,9 @@
+import { additionalLifecycleFixtures } from './lifecycle.js';
 export const hostedCheckoutLifecycle = {
   scope:
     'Acceptance fixtures for post-authorization hosted checkout. REVIEW may hold an authorization or capture while blocking fulfillment, as in OpenShop.',
   fixtures: [
+    ...additionalLifecycleFixtures,
     {
       event: 'Authorized checkout before evaluation',
       buyerStatus: 'processing',
