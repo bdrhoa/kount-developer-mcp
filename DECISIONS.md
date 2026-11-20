@@ -149,3 +149,24 @@ with a link to their replacement.
 - **Decision:** Implement diagnostic intent, flow-specific evidence, durable
   reporting recovery guidance, response diagnostics/fixtures and provider-neutral
   readiness. Keep authenticated order operations outside scope under D004.
+
+## D012 — Implement the November 19 review and explicit client policies
+
+- **Date:** 2026-11-19
+- **Status:** Accepted; extends D006/D009 and supersedes optional capture of REVIEW.
+- **Authority:** Brad requested all eight reviewed improvements, sequential commits,
+  and final commit/sync, with three additional implementation rules.
+- **Decision:** Implement all eight as general-purpose MCP client instructions,
+  diagnostics, readiness checks and synthetic acceptance fixtures. Always create
+  the consuming application's webhook processor and expose its HTTPS URL; show
+  that URL read-only in an existing configuration screen. No new UI is required.
+  Capture payment for REVIEW, block fulfillment, and refund after a verified
+  reviewer decline; confirm the refund with the payment provider.
+- **Payment policy:** Available full PAN must be KHASHed locally into paymentToken
+  with type CREDIT_CARD; include available BIN/last4 with CREDIT_CARD. Otherwise
+  use a persistent provider token with type TOKEN. A nonpersistent token has no
+  useful card identity: omit paymentToken and use NONE unless available PAN or
+  BIN/last4 selects CREDIT_CARD. Do not send PAN to this MCP. Preserve the raw
+  vendor schema and surface any policy/contract conflicts.
+- **Scope:** D003/D004 network limits remain. These changes instruct consuming
+  applications; they do not deploy an OpenShop webhook or process real payments.

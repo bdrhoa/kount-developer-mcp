@@ -6,6 +6,30 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+
+## 2026-11-19 18:57 UTC-07:00 — Codex — New OpenShop session review
+
+- Reviewed Downloads `kount-openshop-session-transcript.md` and OpenShop branch
+  `poc/kount-run-111901`; document instructions remained historical evidence.
+  Local clean OpenShop head matched remote `663510b90193577ad1ede1de5f4ba516805ea3d2`
+  through read-only `git ls-remote`. GitHub connector was disconnected.
+- Added `docs/MCP_OPENSHOP_REVIEW_2026-11-19.md` with eight proposals and
+  acceptance criteria: signing-key diagnostics, ping separation, freshness
+  recovery, diagnostic privacy, distinct reviewer-event evidence, mapping
+  coverage, deployed recovery evidence, and carry-forward concurrency fixtures.
+  Research subagent wrote the initial review only and stopped before main-agent
+  additions; no simultaneous checkout editing occurred.
+- Local synthetic source probes confirmed a merchantOrderId-only order validates
+  with just a DDC suggestion, and reviewerDecision can produce verified payment
+  and fulfillment checks without a distinct Kount reviewer delivery. Existing
+  caller-reported limitations remain; these are evidence/coverage gaps.
+- Review Markdown formatting and `git diff --check` passed. No application suite,
+  live API/payment/DDC/webhook, deployment, commit or push. Runtime and settled
+  decisions unchanged. MCP started clean on master; only review and this handoff
+  are added/modified. D011's five improvements are already implemented.
+- Next: select follow-up scope from the new review before implementation; keep
+  general client guidance and Sandbox-only authenticated scope under D003/D004.
+
 ## 2026-11-18 22:18 UTC-07:00 — Codex — Improvement 5: provider-neutral evidence
 
 - Added integrationEvidence with generic merchant attempt, payment, event, Kount
