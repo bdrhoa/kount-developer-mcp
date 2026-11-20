@@ -138,7 +138,7 @@ export const guidance: Record<Topic, Guidance> = {
     ],
     recommendations: [
       'Retain the returned order identifier and test the selected payment lifecycle with Kount. Confirm identifier spelling and decision vocabulary where the guide conflicts with the schema.',
-      'In a post-authorization flow, send the known authorization outcome with the initial evaluation. For an uncaptured REVIEW order declined by a reviewer, cancel or release the authorization. For an already captured REVIEW order, issue a refund through the payment provider. Keep fulfillment blocked and record a refund as complete only after provider confirmation.',
+      'In a post-authorization flow, send the known authorization outcome with the initial evaluation. Maintainer policy: always capture REVIEW payments, keep fulfillment blocked, and issue a refund through the payment provider after a verified reviewer decline. Keep fulfillment blocked and record a refund as complete only after provider confirmation.',
       'For hosted Stripe Checkout, check the refund reason before use. A fraudulent refund can affect later Radar decisions for the same identities.',
       'Verify the applicable Kount update or reversal reporting separately from the payment-provider action. The k360pf PATCH demo illustrates the pre-authorization sequence using simulated data.',
     ],

@@ -127,7 +127,7 @@ describe('MCP over actual stdio', () => {
             checks: {
               subscriptions: {
                 'payment_intent.canceled': 'verified',
-                'refund.updated': 'not_applicable',
+                'refund.updated': 'failed',
               },
             },
           },

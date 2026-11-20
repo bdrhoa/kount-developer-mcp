@@ -1,3 +1,4 @@
+import { reviewerDelivery, assessReviewer } from './reviewer-evidence.js';
 import { z } from 'zod';
 import { lifecycleEvents, lifecyclePaymentStates } from '../resources/v2/lifecycle.js';
 const id = z.string().trim().min(1).max(200);
@@ -13,6 +14,7 @@ const paymentStates = [
   'refund_failed',
 ] as const;
 export const integrationEvidence = z.strictObject({
+  reviewerDelivery: reviewerDelivery.optional(),
   attemptId: id,
   paymentId: id.optional(),
   provider: id.optional(),
@@ -108,11 +110,17 @@ export function assessIntegrationEvidence(input: IntegrationEvidence) {
           (!event || (processed === true && evaluation?.eventId === event.id))
         ? true
         : undefined;
+  const reviewer = assessReviewer(
+    input.reviewerDelivery,
+    input.attemptId,
+    evaluationCorrelated === true ? evaluation?.orderId : undefined,
+    payment?.reviewerDecision,
+  );
   const decision =
     evaluationCorrelated === true
       ? evaluation?.decision === 'REVIEW'
         ? paymentMatch === true
-          ? (payment?.reviewerDecision ?? 'REVIEW')
+          ? (reviewer.decision ?? 'REVIEW')
           : 'REVIEW'
         : evaluation?.decision
       : !evaluation && paymentMatch === true && processed === true
@@ -132,9 +140,10 @@ export function assessIntegrationEvidence(input: IntegrationEvidence) {
       paymentOutcome =
         payment.state === 'refund_pending'
           ? undefined
-          : ['canceled', 'refunded'].includes(payment.state);
-    else if (decision === 'REVIEW')
-      paymentOutcome = ['authorized', 'captured'].includes(payment.state);
+          : evaluation?.decision === 'REVIEW'
+            ? payment.state === 'refunded'
+            : ['canceled', 'refunded'].includes(payment.state);
+    else if (decision === 'REVIEW') paymentOutcome = payment.state === 'captured';
   }
   const deviceOrderMatch =
     device?.kountOrderId && evaluation ? device.kountOrderId === evaluation.orderId : undefined;
@@ -143,6 +152,7 @@ export function assessIntegrationEvidence(input: IntegrationEvidence) {
     reportedEvidence: input.evidenceOrigin ?? 'declared',
     authorizationFlow: input.authorizationFlow,
     checks: {
+      reviewerDelivery: reviewer.checks,
       eventCorrelation: observed(eventMatch),
       eventProcessing: observed(processed),
       evaluationCorrelation: observed(evaluationCorrelated),
@@ -190,7 +200,7 @@ export function assessIntegrationEvidence(input: IntegrationEvidence) {
     decisionSource: decision
       ? !evaluation
         ? 'fallback'
-        : evaluation.decision === 'REVIEW' && payment?.reviewerDecision
+        : evaluation.decision === 'REVIEW' && reviewer.decision
           ? 'reviewer'
           : 'kount'
       : null,

@@ -12,22 +12,22 @@ const base = {
     ],
   },
 };
-it('checks hold cancellation without requiring refunds', () => {
+it('requires refund subscriptions for captured REVIEW even when disabled', () => {
   const result = assessHostedCheckout({
     ...base,
     flow: { authorizationHold: true, failedAttempts: true, refunds: false },
   });
   expect(result.checks.subscriptions).toMatchObject({
     'payment_intent.canceled': 'verified',
-    'refund.updated': 'not_applicable',
-    'refund.failed': 'not_applicable',
+    'refund.updated': 'failed',
+    'refund.failed': 'failed',
   });
   expect(
     assessHostedCheckout({ ...base, flow: { refunds: true } }).checks.subscriptions[
       'refund.updated'
     ],
   ).toBe('failed');
-  expect(assessHostedCheckout(base).checks.subscriptions['refund.updated']).toBe('unverified');
+  expect(assessHostedCheckout(base).checks.subscriptions['refund.updated']).toBe('failed');
 });
 it.each([
   ['authorization_refused', 'payment_intent.payment_failed', 'refused'],

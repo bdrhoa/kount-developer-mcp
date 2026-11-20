@@ -3,6 +3,16 @@ import { webhookPolicy } from './webhook-policy.js';
 export const integrationPolicy = {
   authority: 'maintainer_requested',
   scope: 'General Kount merchant integrations; implemented by the consuming application.',
+  review: {
+    capture:
+      'Always capture payment for REVIEW, confirm processor success and report capture to Kount. Keep fulfillment blocked while review is open.',
+    approval:
+      'A verified Kount reviewer approval releases fulfillment only after confirmed capture. Do not capture a second time.',
+    decline:
+      'A verified Kount reviewer decline issues an idempotent refund through the payment provider. Keep fulfillment blocked; pending/failed refunds remain unresolved until provider confirmation. Report refund outcomes to Kount separately.',
+    failures:
+      'Capture failure is unresolved REVIEW, never successful payment or fulfillment permission. A webhook 200 or refund request is not proof of a completed refund.',
+  },
   webhooks: webhookPolicy,
   retries: {
     implementation:

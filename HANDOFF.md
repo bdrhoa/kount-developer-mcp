@@ -7,6 +7,10 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-19 19:18 UTC-07:00 — Codex — Improvement 5: reviewer provenance and captured REVIEW
+
+- Added distinct Kount reviewer delivery evidence and correlation/signature/freshness/processing checks; legacy reviewerDecision cannot alone establish provenance. Generic and Stripe assessments require capture for REVIEW and refund after verified decline; pending refunds remain unresolved. Refund subscriptions required by captured-REVIEW policy. D012 supersedes optional capture. Typecheck and all 141 tests passed. Next: mapping coverage and payment rules.
+
 ## 2026-11-19 19:16 UTC-07:00 — Codex — Improvement 4: diagnostic privacy
 
 - Added summary-first diagnostics recipe, optional explicitly authorized bounded raw capture guidance, and caller-reported authorization/access/bounds/deletion/log checks. MCP inputs reject raw keys, signatures and bodies. Typecheck and 8 targeted tests passed. No capture implementation or live calls. Next: reviewer evidence and captured REVIEW/refund policy.

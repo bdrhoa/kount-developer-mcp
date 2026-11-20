@@ -1,3 +1,4 @@
+import { reviewerDelivery } from './reviewer-evidence.js';
 import { assessIntegrationEvidence } from './integration-evidence.js';
 import { z } from 'zod';
 import {
@@ -13,6 +14,7 @@ const deliveryOutcome = ['accepted', 'signature_rejected', 'not_configured', 'sk
 export const hostedCheckoutEvidence = z.strictObject({
   flow: lifecycleFlow.optional(),
   lifecycleEvent: z.enum(lifecycleEvents).optional(),
+  reviewerDelivery: reviewerDelivery.optional(),
   checkoutId: identifier,
   paymentIntentId: identifier,
   expectedRevision: identifier.optional(),
@@ -84,6 +86,7 @@ function observed(value: boolean | undefined) {
 }
 
 export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidence>) {
+  const correlatedEvidence = assessIntegrationEvidence(adaptHostedCheckout(input));
   const { delivery, endpoint, kountOrder, payment, device } = input;
   const lifecycleEvent = input.lifecycleEvent ?? 'authorized_checkout';
   const evaluating = lifecycleEvent === 'authorized_checkout';
@@ -120,9 +123,7 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
       : undefined;
   const paymentMatch = payment ? payment.paymentIntentId === input.paymentIntentId : undefined;
   const reviewer =
-    evaluation === true && kountOrder?.decision === 'REVIEW' && paymentMatch === true
-      ? payment?.reviewerDecision
-      : undefined;
+    correlatedEvidence.decisionSource === 'reviewer' ? correlatedEvidence.decision : undefined;
   const fallback =
     evaluating &&
     !kountOrder &&
@@ -142,12 +143,12 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
         break;
       case 'DECLINE':
         paymentOutcome =
-          payment.state === 'canceled' || (reviewer === 'DECLINE' && payment.state === 'refunded');
+          reviewer === 'DECLINE' ? payment.state === 'refunded' : payment.state === 'canceled';
         if (reviewer === 'DECLINE' && payment.state === 'refund_pending')
           paymentOutcome = undefined;
         break;
       case 'REVIEW':
-        paymentOutcome = ['authorized', 'captured'].includes(payment.state);
+        paymentOutcome = payment.state === 'captured';
         break;
     }
     fulfillment =
@@ -177,9 +178,11 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
   const kountSession = deviceOrderCorrelated ? device?.kountSessionId : undefined;
   return {
     evidence: 'caller_reported_only',
-    correlatedEvidence: assessIntegrationEvidence(adaptHostedCheckout(input)),
+    correlatedEvidence,
     lifecycleEvent,
     checks: {
+      reviewRefundPolicy: observed(input.flow?.refunds),
+      reviewerDelivery: correlatedEvidence.checks.reviewerDelivery,
       deploymentRevision: observed(
         input.expectedRevision && input.deployedRevision
           ? input.expectedRevision === input.deployedRevision
@@ -191,8 +194,8 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
         subscription('checkout.session.completed', true),
         subscription('payment_intent.payment_failed', input.flow?.failedAttempts),
         subscription('payment_intent.canceled', input.flow?.authorizationHold),
-        subscription('refund.updated', input.flow?.refunds),
-        subscription('refund.failed', input.flow?.refunds),
+        subscription('refund.updated', true),
+        subscription('refund.failed', true),
       ]),
       checkoutHold: observed(input.holdMarker),
       checkoutDelivery: observed(checkoutDelivery),
@@ -244,6 +247,7 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
 /** Preserve the public Stripe input while sharing provider-neutral correlation checks. */
 export function adaptHostedCheckout(input: z.infer<typeof hostedCheckoutEvidence>) {
   return {
+    reviewerDelivery: input.reviewerDelivery,
     attemptId: input.checkoutId,
     paymentId: input.paymentIntentId,
     provider: 'stripe',

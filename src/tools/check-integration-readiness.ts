@@ -131,7 +131,7 @@ export function checkIntegrationReadiness(
         : []),
       ...(configuration.authorizationFlow === 'post'
         ? [
-            'Verify that evaluation includes the known authorization outcome. For REVIEW followed by human decline, verify cancellation of an uncaptured authorization or a provider-confirmed refund of a captured payment. Verify fulfillment blocking and Kount reporting independently.',
+            'Verify that evaluation includes the known authorization outcome. Always capture REVIEW payment and block fulfillment; after a verified reviewer decline require a provider-confirmed refund. Verify fulfillment blocking and Kount reporting independently.',
           ]
         : []),
       ...(configuration.deviceCollection === 'enabled'

@@ -1,7 +1,7 @@
 import { additionalLifecycleFixtures } from './lifecycle.js';
 export const hostedCheckoutLifecycle = {
   scope:
-    'Acceptance fixtures for post-authorization hosted checkout. REVIEW may hold an authorization or capture while blocking fulfillment, as in OpenShop.',
+    'Acceptance fixtures for post-authorization hosted checkout. Maintainer policy: always capture REVIEW payment while blocking fulfillment; a verified reviewer decline requires a refund.',
   fixtures: [
     ...additionalLifecycleFixtures,
     {
@@ -27,24 +27,18 @@ export const hostedCheckoutLifecycle = {
     },
     {
       event: 'REVIEW',
-      buyerStatus: 'received or confirmed according to capture policy',
-      payment: 'authorized or captured',
+      buyerStatus: 'payment captured; review pending',
+      payment: 'captured',
       fulfillmentAllowed: false,
-      kountFeedback: 'Report capture if it occurs. Keep the review open.',
+      kountFeedback: 'Confirm and report CAPTURED. Keep the review open and fulfillment blocked.',
     },
     {
       event: 'Reviewer approves',
       buyerStatus: 'confirmed after capture',
       payment: 'captured',
       fulfillmentAllowed: true,
-      kountFeedback: 'Report a new capture if required.',
-    },
-    {
-      event: 'Reviewer declines an uncaptured order',
-      buyerStatus: 'declined',
-      payment: 'canceled',
-      fulfillmentAllowed: false,
-      kountFeedback: 'Report CANCELED after authorization release.',
+      kountFeedback:
+        'Release fulfillment only after verified reviewer approval and confirmed prior capture; do not capture again.',
     },
     {
       event: 'Reviewer declines a captured order; refund pending',
