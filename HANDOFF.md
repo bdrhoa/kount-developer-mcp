@@ -7,6 +7,10 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-19 19:19 UTC-07:00 — Codex — Improvement 6: mapping coverage and payment identity
+
+- Added redacted mapping coverage to validation and readiness, separate from schema validity. D012 payment priority is full PAN KHASH/CREDIT_CARD, persistent token/TOKEN, partial BIN/last4/CREDIT_CARD, otherwise NONE with no token. Nonpersistent identifiers fail useful-token checks; raw PAN/token values are not accepted in coverage. KHASH stays local with verified Kount procedure, no guessed algorithm. Typecheck and 49 targeted tests passed. Next: deployed recovery evidence.
+
 ## 2026-11-19 19:18 UTC-07:00 — Codex — Improvement 5: reviewer provenance and captured REVIEW
 
 - Added distinct Kount reviewer delivery evidence and correlation/signature/freshness/processing checks; legacy reviewerDecision cannot alone establish provenance. Generic and Stripe assessments require capture for REVIEW and refund after verified decline; pending refunds remain unresolved. Refund subscriptions required by captured-REVIEW policy. D012 supersedes optional capture. Typecheck and all 141 tests passed. Next: mapping coverage and payment rules.

@@ -92,7 +92,7 @@ export function createServer(schemaPath?: string): McpServer {
   );
   register(
     'validate_order_payload',
-    'Validate a synthetic v2 order, optionally with evaluation POST, data-only POST, or status PATCH request metadata. valid:null means unavailable or indeterminate. No network calls.',
+    'Validate a synthetic v2 order and optional redacted coverage inventory (no PAN/token values), optionally with evaluation POST, data-only POST, or status PATCH request metadata. valid:null means unavailable or indeterminate. No network calls.',
     validateInput,
     (input) => validateOrderPayload(input, validation),
   );

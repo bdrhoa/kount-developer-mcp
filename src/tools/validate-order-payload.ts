@@ -1,3 +1,4 @@
+import { mappingCoverage, assessMappingCoverage } from './mapping-coverage.js';
 import { z } from 'zod';
 import type { JsonObject } from '../services/schema.js';
 import type { Finding, ValidationService } from '../services/validation.js';
@@ -18,16 +19,26 @@ export const orderRequest = z.strictObject({
 });
 
 export const validateInput = z.strictObject({
+  coverage: mappingCoverage.optional(),
   payload: z.record(z.string(), z.json()),
   request: orderRequest.optional(),
 });
 
 export function validateOrderPayload(
-  input: { payload: JsonObject; request?: z.infer<typeof orderRequest> | undefined },
+  input: {
+    payload: JsonObject;
+    request?: z.infer<typeof orderRequest> | undefined;
+    coverage?: z.infer<typeof mappingCoverage> | undefined;
+  },
   validation: ValidationService,
 ) {
   const { request } = input;
-  if (!request) return validation.validate(input.payload);
+  const coverageAssessment = input.coverage ? assessMappingCoverage(input.coverage) : undefined;
+  if (!request)
+    return {
+      ...validation.validate(input.payload),
+      ...(coverageAssessment ? { coverageAssessment } : {}),
+    };
 
   const patch = request.mode === 'status_update';
   const body = validation.validate(input.payload, patch ? 'update_order' : 'evaluate_order');
@@ -35,6 +46,7 @@ export function validateOrderPayload(
 
   return {
     ...body,
+    ...(coverageAssessment ? { coverageAssessment } : {}),
     ...(requestErrors.length ? { valid: false as const, status: 'invalid' as const } : {}),
     errors: [...requestErrors, ...body.errors],
     mode: request.mode,

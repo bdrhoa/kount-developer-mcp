@@ -1,8 +1,10 @@
+import { paymentPolicy } from './payment-policy.js';
 import { webhookPolicy } from './webhook-policy.js';
 /** Maintainer-requested integration policy, not a claim about the vendor contract. */
 export const integrationPolicy = {
   authority: 'maintainer_requested',
   scope: 'General Kount merchant integrations; implemented by the consuming application.',
+  payment: paymentPolicy,
   review: {
     capture:
       'Always capture payment for REVIEW, confirm processor success and report capture to Kount. Keep fulfillment blocked while review is open.',
