@@ -1,3 +1,4 @@
+import { reliabilityFixtures } from '../resources/v2/reliability-fixtures.js';
 import { webhookPolicy } from '../resources/v2/webhook-policy.js';
 import { responseFixtures } from '../resources/v2/response-fixtures.js';
 import { reportingRecovery } from '../resources/v2/reporting-recovery.js';
@@ -45,6 +46,7 @@ export class DocumentationService {
       integrationPolicy,
       webhookPolicy,
       reportingRecovery,
+      reliabilityFixtures,
       responseFixtures,
       ...(topic === 'authorization_updates' || topic === 'webhooks'
         ? { integrationEvidence: [openShopRefundEvidence], hostedCheckoutLifecycle }

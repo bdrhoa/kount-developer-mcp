@@ -1,3 +1,4 @@
+import { reliabilityEvidence, assessReliability } from './reliability-evidence.js';
 import { mappingCoverage, assessMappingCoverage } from './mapping-coverage.js';
 import { diagnosticPrivacy, assessDiagnosticPrivacy } from './diagnostic-privacy.js';
 import { webhookProcessor, assessWebhookProcessor } from './webhook-processor.js';
@@ -20,6 +21,7 @@ import type { CredentialStatus } from '../services/credentials.js';
 const settingKeys = z.array(z.string().regex(/^[A-Z][A-Z0-9_]{0,99}$/)).max(100);
 
 export const readinessInput = z.strictObject({
+  reliability: reliabilityEvidence.optional(),
   mappingCoverage: mappingCoverage.optional(),
   diagnosticPrivacy: diagnosticPrivacy.optional(),
   webhookProcessor: webhookProcessor.optional(),
@@ -73,6 +75,7 @@ export function checkIntegrationReadiness(
   }));
   return {
     assessment: 'self_report_only',
+    ...(input.reliability ? { reliability: assessReliability(input.reliability) } : {}),
     ...(input.mappingCoverage
       ? { mappingCoverage: assessMappingCoverage(input.mappingCoverage) }
       : {}),

@@ -7,6 +7,10 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-19 19:21 UTC-07:00 — Codex — Improvement 8: concurrency and crash fixtures
+
+- Added language-neutral barrier/fault schedules for simultaneous starts, death after send, callbacks before persistence, conflicting reviewer events and early refund callbacks. Readiness distinguishes missing/source-only assertions from reported injected test outcomes and rejects duplicate payment effects. Typecheck and 25 targeted tests passed. Next: final usage documentation, full checks, then rebase/push/parity verification.
+
 ## 2026-11-19 19:20 UTC-07:00 — Codex — Improvement 7: deployed reporting recovery
 
 - Added effective configuration, revision parity, registered trigger, recent observed run, next-job and backlog evidence. Pending recovery stays unverified for source/mock-only evidence; assigned escalation remains valid. Added deployment regeneration/restart guidance. Typecheck and 10 targeted tests passed; no deployment or scheduler action. Next: concurrency/crash acceptance fixtures, final documentation and full verification.
