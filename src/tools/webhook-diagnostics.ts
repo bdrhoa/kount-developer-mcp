@@ -3,6 +3,18 @@ const fingerprint = z.string().regex(/^[a-f0-9]{16,64}$/i);
 /** Summaries from the client verifier only: never accept keys, signatures or raw bodies. */
 export const webhookDiagnostics = z.strictObject({
   eventType: z.enum(['Webhook.TestPing', 'business_event', 'other']).optional(),
+  freshness: z
+    .strictObject({
+      deliveryAgeMs: z.number().int().min(-86400000).max(31536000000),
+      maxAgeMs: z.number().int().nonnegative().max(31536000000),
+      maxFutureSkewMs: z.number().int().nonnegative().max(86400000),
+      clockChecked: z.boolean().optional(),
+    })
+    .optional(),
+  duplicateSuppressed: z.boolean().optional(),
+  durablyProcessed: z.boolean().optional(),
+  retriesStopped: z.boolean().optional(),
+  recoveryAssigned: z.boolean().optional(),
   businessStateChanged: z.boolean().optional(),
   signatureHeaderPresent: z.boolean().optional(),
   timestampHeaderPresent: z.boolean().optional(),
@@ -16,6 +28,15 @@ export const webhookDiagnostics = z.strictObject({
 });
 export function diagnoseWebhook(input: z.infer<typeof webhookDiagnostics>) {
   const findings: string[] = [];
+  const freshness = input.freshness;
+  const fresh = freshness
+    ? freshness.deliveryAgeMs <= freshness.maxAgeMs &&
+      freshness.deliveryAgeMs >= -freshness.maxFutureSkewMs
+    : undefined;
+  if (fresh === false)
+    findings.push(
+      freshness!.deliveryAgeMs > freshness!.maxAgeMs ? 'timestamp_expired' : 'timestamp_in_future',
+    );
   if (input.signatureHeaderPresent === false) findings.push('missing_signature_header');
   if (input.timestampHeaderPresent === false) findings.push('missing_timestamp_header');
   if (input.keyParsed === false) findings.push('malformed_public_key');
@@ -30,6 +51,36 @@ export function diagnoseWebhook(input: z.infer<typeof webhookDiagnostics>) {
   if (input.signatureVerified === false) findings.push('cryptographic_mismatch');
   return {
     evidence: 'caller_reported_only',
+    freshness:
+      fresh === false
+        ? 'failed'
+        : fresh === true && freshness?.clockChecked === true
+          ? 'verified'
+          : 'unverified',
+    duplicateSuppression:
+      input.duplicateSuppressed === undefined
+        ? 'unverified'
+        : input.duplicateSuppressed
+          ? 'verified'
+          : 'failed',
+    durableProcessing:
+      input.durablyProcessed === undefined
+        ? 'unverified'
+        : input.durablyProcessed
+          ? 'verified'
+          : 'failed',
+    recovery:
+      input.retriesStopped === true || fresh === false
+        ? {
+            action: 'authoritative_reconciliation_or_supported_fresh_delivery',
+            owner:
+              input.recoveryAssigned === undefined
+                ? 'unverified'
+                : input.recoveryAssigned
+                  ? 'verified'
+                  : 'failed',
+          }
+        : null,
     findings,
     ping:
       input.eventType === 'Webhook.TestPing'

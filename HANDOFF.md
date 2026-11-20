@@ -7,6 +7,10 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-19 19:16 UTC-07:00 — Codex — Improvement 3: freshness and delivery recovery
+
+- Added explicit freshness/skew/clock assessment, durable processing and duplicate evidence, plus owned recovery after expired or exhausted deliveries. Guide fixtures cover boundaries and corrected keys without weakening freshness. Typecheck and 12 targeted tests passed. Next: diagnostic privacy recipe.
+
 ## 2026-11-19 19:15 UTC-07:00 — Codex — Improvement 2: pings and client webhook endpoint
 
 - Added exact no-op ping guidance/fixtures and separate ping diagnostics. Client policy always requires creating processor, exposing actual HTTPS URL and read-only display in existing configuration UI; readiness reports missing and failed evidence, with ENV-only support. Typecheck and 29 targeted tests passed. Next: freshness and stopped-delivery recovery.
