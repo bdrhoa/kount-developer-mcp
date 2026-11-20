@@ -1,5 +1,7 @@
+import { recoveryDeployment, assessRecoveryDeployment } from './recovery-deployment.js';
 import { z } from 'zod';
 export const reportingEvidence = z.strictObject({
+  deployment: recoveryDeployment.optional(),
   operation: z.enum(['data_only_order', 'update_order', 'batch_update_reversals']),
   state: z.enum(['pending', 'confirmed', 'rejected', 'unknown']),
   lastOutcome: z
@@ -16,6 +18,7 @@ export const reportingEvidence = z.strictObject({
 const check = (value: boolean | undefined) =>
   value === undefined ? 'unverified' : value ? 'verified' : 'failed';
 export function assessReporting(input: z.infer<typeof reportingEvidence>) {
+  const deployment = assessRecoveryDeployment(input.deployment);
   const confirmed = input.state === 'confirmed';
   const consistent =
     input.lastOutcome === undefined
@@ -31,6 +34,7 @@ export function assessReporting(input: z.infer<typeof reportingEvidence>) {
               : input.state === 'pending';
   return {
     evidence: 'caller_reported_only',
+    deployment,
     reportingConfirmed: check(confirmed ? consistent : false),
     eventAcknowledged: input.eventAcknowledged ?? null,
     checks: {
@@ -41,13 +45,18 @@ export function assessReporting(input: z.infer<typeof reportingEvidence>) {
         ? 'not_applicable'
         : input.state === 'pending'
           ? check(
-              input.escalationAssigned === true ||
-                (input.independentRecovery === true && input.nextAttemptScheduled === true)
+              input.escalationAssigned === true
                 ? true
-                : input.independentRecovery === undefined ||
-                    input.nextAttemptScheduled === undefined
-                  ? undefined
-                  : false,
+                : input.independentRecovery === true && input.nextAttemptScheduled === true
+                  ? deployment.execution === 'verified'
+                    ? true
+                    : deployment.execution === 'failed'
+                      ? false
+                      : undefined
+                  : input.independentRecovery === undefined ||
+                      input.nextAttemptScheduled === undefined
+                    ? undefined
+                    : false,
             )
           : check(input.escalationAssigned),
       paymentEffectsNotRepeated: check(

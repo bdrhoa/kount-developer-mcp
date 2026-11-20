@@ -10,6 +10,12 @@ export const reportingRecovery = {
     unknown:
       'The request may have been accepted; reconcile before replay when possible and retain duplicate risk.',
   },
+  deployment: [
+    'Trace the effective deployment configuration source (ENV, tracked template or dashboard); editing a generated root file is insufficient when deployment overwrites it.',
+    'Verify the expected deployed revision, registered scheduler/queue trigger and a recent observed worker run, using explicit age budgets. Source presence and mocked success alone do not prove deployed recovery.',
+    'Record next due job and oldest pending age, alert on backlog exceeding its budget, and demonstrate recovery after restart without another buyer request or webhook.',
+    'Test deployment regeneration retains required triggers and settings. Use generic worker/scheduler contracts; Cloudflare cron is only one implementation.',
+  ],
   recipe: [
     'Persist reporting intent and stable merchant/payment/attempt identifiers before acknowledging the triggering event. Keep payment effects and Kount reporting progress separate.',
     'Use a durable worker/queue or an explicitly owned recovery process that survives restarts and does not depend on another webhook delivery.',
@@ -19,6 +25,18 @@ export const reportingRecovery = {
     'Configure recovery ownership, next-attempt time, bounded retry/deadline limits, and operator escalation when exhausted or blocked by permanent rejection. Record sanitized diagnostics.',
   ],
   fixtures: [
+    {
+      scenario: 'worker source exists but deployed trigger is missing',
+      state: 'pending',
+      recovery: 'register_trigger_and_verify_observed_run',
+      paymentEffectsRepeated: false,
+    },
+    {
+      scenario: 'deployment regenerates configuration',
+      state: 'pending',
+      recovery: 'preserve_trigger_in_effective_source_and_reverify',
+      paymentEffectsRepeated: false,
+    },
     {
       scenario: 'definite pre-send failure',
       state: 'pending',

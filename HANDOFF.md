@@ -7,6 +7,10 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-19 19:20 UTC-07:00 — Codex — Improvement 7: deployed reporting recovery
+
+- Added effective configuration, revision parity, registered trigger, recent observed run, next-job and backlog evidence. Pending recovery stays unverified for source/mock-only evidence; assigned escalation remains valid. Added deployment regeneration/restart guidance. Typecheck and 10 targeted tests passed; no deployment or scheduler action. Next: concurrency/crash acceptance fixtures, final documentation and full verification.
+
 ## 2026-11-19 19:19 UTC-07:00 — Codex — Improvement 6: mapping coverage and payment identity
 
 - Added redacted mapping coverage to validation and readiness, separate from schema validity. D012 payment priority is full PAN KHASH/CREDIT_CARD, persistent token/TOKEN, partial BIN/last4/CREDIT_CARD, otherwise NONE with no token. Nonpersistent identifiers fail useful-token checks; raw PAN/token values are not accepted in coverage. KHASH stays local with verified Kount procedure, no guessed algorithm. Typecheck and 49 targeted tests passed. Next: deployed recovery evidence.
