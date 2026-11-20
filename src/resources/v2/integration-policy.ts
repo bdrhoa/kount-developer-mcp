@@ -1,7 +1,9 @@
+import { webhookPolicy } from './webhook-policy.js';
 /** Maintainer-requested integration policy, not a claim about the vendor contract. */
 export const integrationPolicy = {
   authority: 'maintainer_requested',
   scope: 'General Kount merchant integrations; implemented by the consuming application.',
+  webhooks: webhookPolicy,
   retries: {
     implementation:
       'Use an established retry library for the implementation language; do not hand-roll retry loops. For example, p-retry is an option for JavaScript/TypeScript; select and verify an appropriate library for the client application language.',

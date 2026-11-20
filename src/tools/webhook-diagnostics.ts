@@ -2,6 +2,8 @@ import { z } from 'zod';
 const fingerprint = z.string().regex(/^[a-f0-9]{16,64}$/i);
 /** Summaries from the client verifier only: never accept keys, signatures or raw bodies. */
 export const webhookDiagnostics = z.strictObject({
+  eventType: z.enum(['Webhook.TestPing', 'business_event', 'other']).optional(),
+  businessStateChanged: z.boolean().optional(),
   signatureHeaderPresent: z.boolean().optional(),
   timestampHeaderPresent: z.boolean().optional(),
   keyParsed: z.boolean().optional(),
@@ -29,6 +31,19 @@ export function diagnoseWebhook(input: z.infer<typeof webhookDiagnostics>) {
   return {
     evidence: 'caller_reported_only',
     findings,
+    ping:
+      input.eventType === 'Webhook.TestPing'
+        ? {
+            reachabilityOnly: true,
+            businessStateSafety:
+              input.businessStateChanged === undefined
+                ? 'unverified'
+                : input.businessStateChanged
+                  ? 'failed'
+                  : 'verified',
+            signingReadiness: 'unverified',
+          }
+        : null,
     signature:
       input.signatureVerified === undefined
         ? 'unverified'

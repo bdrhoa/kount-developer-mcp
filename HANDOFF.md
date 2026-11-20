@@ -7,6 +7,10 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-19 19:15 UTC-07:00 — Codex — Improvement 2: pings and client webhook endpoint
+
+- Added exact no-op ping guidance/fixtures and separate ping diagnostics. Client policy always requires creating processor, exposing actual HTTPS URL and read-only display in existing configuration UI; readiness reports missing and failed evidence, with ENV-only support. Typecheck and 29 targeted tests passed. Next: freshness and stopped-delivery recovery.
+
 ## 2026-11-19 19:14 UTC-07:00 — Codex — Improvement 1: signing diagnostics
 
 - Added summary-only webhook diagnostics to explain_api_error and structured guide policy/fixtures. Distinguishes key mismatch, decoding, raw bytes and environment without algorithm fallback or raw input. Typecheck and 9 targeted tests passed. No live calls. Next: ping separation and mandatory client processor/URL.

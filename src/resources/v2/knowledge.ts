@@ -146,6 +146,7 @@ export const guidance: Record<Topic, Guidance> = {
   },
   webhooks: {
     requirements: [
+      'Maintainer policy: always implement the webhook processor and expose its actual HTTPS URL. Show that URL display-only in an existing configuration screen; a new UI is not required.',
       'Receive webhook POSTs over HTTPS and verify X-Event-Signature with the portal public key using RSA-PSS/SHA-256 (32-byte salt). The signed message is X-Event-Timestamp followed by the original request body.',
       'Check timestamp freshness and handle duplicate delivery. Return HTTP 200 after successful handling.',
     ],

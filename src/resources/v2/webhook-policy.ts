@@ -1,6 +1,24 @@
 export const webhookPolicy = {
   authority: 'maintainer_requested',
   scope: 'Consuming application guidance; the MCP does not host a webhook.',
+  processor:
+    'Always create the consuming application webhook processor, expose its actual HTTPS URL to the user, and show it display-only in an existing configuration screen. Do not create a UI solely for this. An unconfigured key must not remove the route; reject business events safely until configured.',
+  ping: {
+    observedEventType: 'Webhook.TestPing',
+    provenance: 'Observed OpenShop Sandbox session, November 19; not a universal vendor contract.',
+    instructions:
+      'If supporting unsigned portal pings, match the exact allowlisted event type and approved shape in an isolated no-op path. Never match by substring. A ping cannot mutate payment, order or fulfillment state, and its 200 proves reachability only.',
+    fixtures: [
+      { eventType: 'Webhook.TestPing', signed: false, outcome: 'no_op_ping_only' },
+      { eventType: 'Order.StatusChange', signed: false, outcome: 'reject_unsigned_business_event' },
+      { eventType: 'Order.TestPingInjected', signed: false, outcome: 'reject_not_exact_ping' },
+      {
+        eventType: 'Order.StatusChange',
+        signed: true,
+        outcome: 'verify_signature_freshness_and_process',
+      },
+    ],
+  },
   verification:
     'Use the exact configured webhook public key. Verify RSA-PSS/SHA-256, salt 32, over timestamp text plus original body bytes; never use alternate algorithms as acceptance fallback.',
   troubleshooting: [

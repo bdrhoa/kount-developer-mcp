@@ -1,3 +1,4 @@
+import { webhookProcessor, assessWebhookProcessor } from './webhook-processor.js';
 import { integrationEvidence, assessIntegrationEvidence } from './integration-evidence.js';
 import { reportingEvidence, assessReporting } from './reporting-evidence.js';
 import { z } from 'zod';
@@ -17,6 +18,7 @@ import type { CredentialStatus } from '../services/credentials.js';
 const settingKeys = z.array(z.string().regex(/^[A-Z][A-Z0-9_]{0,99}$/)).max(100);
 
 export const readinessInput = z.strictObject({
+  webhookProcessor: webhookProcessor.optional(),
   hostedCheckout: hostedCheckoutEvidence.optional(),
   reporting: reportingEvidence.optional(),
   integrationEvidence: integrationEvidence.optional(),
@@ -67,6 +69,7 @@ export function checkIntegrationReadiness(
   }));
   return {
     assessment: 'self_report_only',
+    webhookProcessor: assessWebhookProcessor(input.webhookProcessor),
     ready: null,
     environment: sandbox,
     ...(credentials ? { credentials } : {}),
