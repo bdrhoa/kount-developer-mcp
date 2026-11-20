@@ -3,6 +3,18 @@ export const webhookPolicy = {
   scope: 'Consuming application guidance; the MCP does not host a webhook.',
   processor:
     'Always create the consuming application webhook processor, expose its actual HTTPS URL to the user, and show it display-only in an existing configuration screen. Do not create a UI solely for this. An unconfigured key must not remove the route; reject business events safely until configured.',
+  diagnostics: {
+    default:
+      'Summary-only: reason codes, header presence, body byte length/hash where appropriate, normalized public-key fingerprint, environment and redacted correlation. Never emit raw bodies, signatures, PAN, bearer tokens or secrets to ordinary logs or MCP results. Base64 is reversible, not redaction.',
+    capture:
+      'Exact raw-byte capture is optional, disabled by default and requires explicit client authorization, restricted access, size bounds, short retention with deletion and synthetic redaction/expiration tests. MCP assessment bounds are at most 256 KiB and 24 hours; these are local review limits, not vendor requirements. Do not submit captured bodies to this MCP.',
+    fixtures: [
+      { scenario: 'default summary-only diagnosis', expected: 'no_raw_capture_needed' },
+      { scenario: 'capture without opt-in or access control', expected: 'failed_control' },
+      { scenario: 'capture past retention deadline', expected: 'deleted_and_unavailable' },
+      { scenario: 'sensitive input injected into diagnostics', expected: 'rejected_without_echo' },
+    ],
+  },
   recovery: {
     instructions: [
       'Select and document a freshness window and allowed future clock skew. The guide suggests 45 minutes; do not infer a universal delivery retry schedule. Check the receiver clock.',
