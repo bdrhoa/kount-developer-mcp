@@ -7,6 +7,13 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-19 19:26 UTC-07:00 — Codex — All eight MCP improvements implemented and verified
+
+- Completed eight sequential improvement commits (31b644d through 48153d9) under D012, including mandatory client processor/URL, captured REVIEW/refunds, and payment identity policy. Final follow-up tightens reviewer key identity/historical capture evidence, existing-UI detection, webhook HTTP status, tool descriptions and packaged usage documentation. See docs/CLIENT_INTEGRATION_POLICY.md; original review now links implementation commits.
+- Build, typecheck, lint, format and all 164 tests passed on installed Node 26.3.0; pinned 26.13.0 unavailable. Compiled stdio discovery/diagnostics/readiness/coverage smoke passed. Package dry-run allowlist includes client-policy doc and excludes env/test files; JSON audit adapted to installed npm object format. Whitespace check passed.
+- No live authentication/order/payment/DDC/webhook, deployment or publication. KHASH procedure is required local client behavior, not an invented MCP hash implementation. All evidence checks remain caller-reported; ready remains null. No OpenShop checkout edits.
+- Final checkpoint commit includes documentation and final verification refinements. Next immediate commands: pull --rebase, push, then verify matching branch tips, zero ahead/behind counts and clean working tree.
+
 ## 2026-11-19 19:21 UTC-07:00 — Codex — Improvement 8: concurrency and crash fixtures
 
 - Added language-neutral barrier/fault schedules for simultaneous starts, death after send, callbacks before persistence, conflicting reviewer events and early refund callbacks. Readiness distinguishes missing/source-only assertions from reported injected test outcomes and rejects duplicate payment effects. Typecheck and 25 targeted tests passed. Next: final usage documentation, full checks, then rebase/push/parity verification.

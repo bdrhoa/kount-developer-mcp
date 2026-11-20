@@ -7,6 +7,14 @@ export const reviewerDelivery = z.strictObject({
   orderId: id.optional(),
   endpointId: id.optional(),
   expectedEndpointId: id.optional(),
+  configuredKeyFingerprint: z
+    .string()
+    .regex(/^[a-f0-9]{16,64}$/i)
+    .optional(),
+  expectedKeyFingerprint: z
+    .string()
+    .regex(/^[a-f0-9]{16,64}$/i)
+    .optional(),
   decision: z.enum(['APPROVE', 'DECLINE']).optional(),
   signatureVerified: z.boolean().optional(),
   freshnessVerified: z.boolean().optional(),
@@ -58,7 +66,12 @@ export function assessReviewer(
         : input.durablyProcessed === true && input.httpStatus !== undefined
           ? true
           : undefined;
+  const keyMatch =
+    input?.configuredKeyFingerprint && input.expectedKeyFingerprint
+      ? input.configuredKeyFingerprint.toLowerCase() === input.expectedKeyFingerprint.toLowerCase()
+      : undefined;
   const values = [
+    keyMatch,
     correlated,
     business,
     input?.signatureVerified,
@@ -73,6 +86,7 @@ export function assessReviewer(
   return {
     checks: {
       correlation: check(correlated),
+      keyIdentity: check(keyMatch),
       businessEvent: check(business),
       signature: check(input?.signatureVerified),
       freshness: check(input?.freshnessVerified),

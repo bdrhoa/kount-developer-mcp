@@ -104,13 +104,13 @@ export function createServer(schemaPath?: string): McpServer {
   );
   register(
     'explain_api_error',
-    'Explain API/transport failures and assess successful order response shapes with optional responseContext (mode, jsonParsed), with optional retry deadline and reconciliation evidence. Optionally validate a synthetic POST or PATCH payload. Never echoes response messages or infers a cause for HTTP 500.',
+    'Explain API/transport failures, diagnose webhook verifier summaries using operation=webhook, and assess successful order response shapes with optional responseContext (mode, jsonParsed), with optional retry deadline and reconciliation evidence. Optionally validate a synthetic POST or PATCH payload. Never echoes response messages or infers a cause for HTTP 500.',
     errorInput,
     (input) => explainApiError(input, validation),
   );
   register(
     'check_integration_readiness',
-    'Assess caller-reported capabilities and evidence against a cited checklist with checks for the configured authorization flow. Correlates optional provider-neutral integrationEvidence for pre/post-authorization flows, reporting recovery evidence, or legacy hosted Stripe checkout evidence and reports local credential status. Does not inspect application code or certify readiness.',
+    'Assess caller-reported capabilities and evidence against a cited checklist with checks for the configured authorization flow. Checks required client webhook processor/URL, optional mapping coverage, diagnostic privacy and reliability evidence. Correlates optional provider-neutral integrationEvidence for pre/post-authorization flows, reporting recovery evidence, or legacy hosted Stripe checkout evidence and reports local credential status. Does not inspect application code or certify readiness.',
     readinessInput,
     (input) => checkIntegrationReadiness(input, authentication.status()),
   );

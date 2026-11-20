@@ -19,7 +19,8 @@
     "README.md",
     "CONTRIBUTING.md",
     "LICENSE",
-    "docs/SOURCES.md"
+    "docs/SOURCES.md",
+    "docs/CLIENT_INTEGRATION_POLICY.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

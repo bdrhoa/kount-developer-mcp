@@ -137,6 +137,143 @@ describe('MCP over actual stdio', () => {
       await client.close();
     }
   });
+  it('serializes new client policy and redacted evidence over MCP', async () => {
+    const { client, transport } = connection(true);
+    try {
+      await client.connect(transport);
+      const call = (name: string, args: Record<string, unknown>) =>
+        client.callTool({ name, arguments: args });
+      expect(await call('get_integration_guide', { topic: 'webhooks' })).toMatchObject({
+        structuredContent: {
+          webhookPolicy: { authority: 'maintainer_requested' },
+          reliabilityFixtures: { scenarios: expect.any(Array) },
+          integrationPolicy: {
+            review: { capture: expect.stringContaining('Always capture') },
+            payment: { authority: 'maintainer_requested' },
+          },
+        },
+      });
+      expect(
+        await call('explain_api_error', {
+          operation: 'webhook',
+          httpStatus: 401,
+          webhook: {
+            signatureVerified: false,
+            freshness: {
+              deliveryAgeMs: 2700001,
+              maxAgeMs: 2700000,
+              maxFutureSkewMs: 300000,
+              clockChecked: true,
+            },
+          },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          httpStatus: 401,
+          webhook: {
+            signature: 'failed',
+            freshness: 'failed',
+            findings: expect.arrayContaining(['timestamp_expired']),
+          },
+        },
+      });
+      expect(
+        await call('validate_order_payload', {
+          payload: { merchantOrderId: 'synthetic' },
+          coverage: {
+            payment: {
+              fullPanAvailable: true,
+              panKhashedLocally: false,
+              submitted: { type: 'CREDIT_CARD', paymentTokenKind: 'khash' },
+            },
+          },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          valid: true,
+          coverageAssessment: {
+            payment: { expectedType: 'CREDIT_CARD', checks: { khash: 'failed' } },
+          },
+        },
+      });
+      expect(
+        await call('check_integration_readiness', {
+          capabilities: [],
+          configuration: { configurationUiAvailable: true },
+          webhookProcessor: {
+            created: true,
+            url: 'https://merchant.example/hook',
+            urlExposedToUser: true,
+            urlDisplayedReadOnly: true,
+          },
+          diagnosticPrivacy: { rawCaptureEnabled: false, rawValuesInLogs: false },
+          reliability: [
+            {
+              scenario: 'crash_after_send',
+              evidenceOrigin: 'mock_tested',
+              faultInjected: true,
+              unknownOutcomePreserved: true,
+              paymentEffectsRepeated: false,
+            },
+          ],
+          reporting: {
+            operation: 'update_order',
+            state: 'pending',
+            independentRecovery: true,
+            nextAttemptScheduled: true,
+            deployment: { triggerRegistered: false },
+          },
+          integrationEvidence: {
+            attemptId: 'attempt',
+            paymentId: 'payment',
+            authorizationFlow: 'post',
+            evaluation: {
+              attemptId: 'attempt',
+              paymentId: 'payment',
+              orderId: 'order',
+              decision: 'REVIEW',
+            },
+            payment: {
+              id: 'payment',
+              attemptId: 'attempt',
+              state: 'captured',
+              reviewerDecision: 'APPROVE',
+              fulfillmentAllowed: true,
+            },
+          },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          ready: null,
+          webhookProcessor: {
+            url: 'https://merchant.example/hook',
+            checks: { configurationDisplayOnly: 'verified' },
+          },
+          diagnosticPrivacy: { checks: { logsExcludeRawValues: 'verified' } },
+          reliability: {
+            scenarios: expect.arrayContaining([
+              { scenario: 'crash_after_send', status: 'verified', reportedEvidence: 'mock_tested' },
+            ]),
+          },
+          reporting: { deployment: { execution: 'failed' } },
+          integrationEvidence: {
+            decision: 'REVIEW',
+            checks: {
+              reviewerDelivery: { decisionProvenance: 'unverified' },
+              fulfillment: 'failed',
+            },
+          },
+        },
+      });
+      for (const args of [
+        { operation: 'webhook', webhook: { rawBody: 'synthetic-sensitive' } },
+        { operation: 'webhook', webhook: { signature: 'synthetic-sensitive' } },
+      ])
+        expect(await call('explain_api_error', args)).toMatchObject({ isError: true });
+    } finally {
+      await client.close();
+    }
+  });
   it('checks POC 2 requests, correlated checkout evidence, and retry decisions', async () => {
     const { client, transport } = connection(true);
     try {

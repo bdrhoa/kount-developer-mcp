@@ -48,6 +48,7 @@ export const integrationEvidence = z.strictObject({
       attemptId: id,
       state: z.enum(paymentStates),
       fulfillmentAllowed: z.boolean().optional(),
+      reviewCaptureConfirmed: z.boolean().optional(),
       reviewerDecision: z.enum(['APPROVE', 'DECLINE']).optional(),
       fallbackDecision: z.enum(['APPROVE', 'DECLINE']).optional(),
     })
@@ -153,6 +154,20 @@ export function assessIntegrationEvidence(input: IntegrationEvidence) {
     authorizationFlow: input.authorizationFlow,
     checks: {
       reviewerDelivery: reviewer.checks,
+      reviewCapture:
+        evaluation?.decision !== 'REVIEW'
+          ? 'not_applicable'
+          : observed(
+              paymentMatch !== true
+                ? undefined
+                : payment?.reviewCaptureConfirmed === false
+                  ? false
+                  : payment?.state === 'captured'
+                    ? true
+                    : payment?.state === 'authorized' || payment?.state === 'not_authorized'
+                      ? false
+                      : payment?.reviewCaptureConfirmed,
+            ),
       eventCorrelation: observed(eventMatch),
       eventProcessing: observed(processed),
       evaluationCorrelation: observed(evaluationCorrelated),

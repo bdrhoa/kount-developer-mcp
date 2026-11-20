@@ -61,6 +61,7 @@ export const hostedCheckoutEvidence = z.strictObject({
         'refund_failed',
       ]),
       fulfillmentAllowed: z.boolean().optional(),
+      reviewCaptureConfirmed: z.boolean().optional(),
       reviewerDecision: z.enum(['APPROVE', 'DECLINE']).optional(),
       fallbackDecision: z.enum(['APPROVE', 'DECLINE']).optional(),
     })
@@ -183,6 +184,7 @@ export function assessHostedCheckout(input: z.infer<typeof hostedCheckoutEvidenc
     checks: {
       reviewRefundPolicy: observed(input.flow?.refunds),
       reviewerDelivery: correlatedEvidence.checks.reviewerDelivery,
+      reviewCapture: correlatedEvidence.checks.reviewCapture,
       deploymentRevision: observed(
         input.expectedRevision && input.deployedRevision
           ? input.expectedRevision === input.deployedRevision
@@ -285,6 +287,7 @@ export function adaptHostedCheckout(input: z.infer<typeof hostedCheckoutEvidence
           state: input.payment.state,
           fulfillmentAllowed: input.payment.fulfillmentAllowed,
           reviewerDecision: input.payment.reviewerDecision,
+          reviewCaptureConfirmed: input.payment.reviewCaptureConfirmed,
           fallbackDecision: input.holdMarker === true ? input.payment.fallbackDecision : undefined,
         }
       : undefined,

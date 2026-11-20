@@ -61,3 +61,13 @@ it('pings never establish signing or business-event readiness', () => {
   if (guide.status !== 'available') throw new Error('missing');
   expect(guide.webhookPolicy.ping.instructions).toContain('Never match by substring');
 });
+
+it('uses the existing UI declaration even if nested processor evidence says no screen', () => {
+  expect(
+    checkIntegrationReadiness({
+      capabilities: [],
+      configuration: { configurationUiAvailable: true },
+      webhookProcessor: { configurationScreenExists: false, urlDisplayedReadOnly: false },
+    }).webhookProcessor.checks.configurationDisplayOnly,
+  ).toBe('failed');
+});

@@ -31,7 +31,11 @@ it('accepts only redacted verifier summaries and bypasses API 401 semantics', ()
     { operation: 'webhook', httpStatus: 401, webhook: { signatureVerified: false } },
     v,
   );
-  expect(result).toMatchObject({ operation: 'webhook', webhook: { signature: 'failed' } });
+  expect(result).toMatchObject({
+    operation: 'webhook',
+    httpStatus: 401,
+    webhook: { signature: 'failed' },
+  });
   expect(result).not.toHaveProperty('retry');
   expect(explainApiError({ operation: 'token', webhook: {} }, v)).toMatchObject({
     status: 'blocked',

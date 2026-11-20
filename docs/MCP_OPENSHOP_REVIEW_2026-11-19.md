@@ -11,6 +11,30 @@ This document proposes improvements; it changes no runtime behavior or settled
 decision. OpenShop's implementation is evidence of this client, not a universal
 vendor contract. The prior five improvements in D011 are already present and are not proposed again.
 
+## Implementation follow-up
+
+Brad authorized all eight proposals under D012. Implemented sequentially as:
+
+| Improvement                                    | Commit  |
+| ---------------------------------------------- | ------- |
+| Signing diagnostics                            | 31b644d |
+| Ping separation and required processor/URL     | c582e1d |
+| Freshness and stopped-delivery recovery        | b181143 |
+| Diagnostic privacy                             | 1c77f4a |
+| Reviewer provenance and captured REVIEW/refund | eb4707f |
+| Mapping coverage and useful payment identity   | 789b0fa |
+| Deployed reporting recovery                    | 02bfebd |
+| Concurrency/crash schedules and evidence       | 48153d9 |
+
+D012 also requires always creating/exposing the client webhook processor, capturing
+REVIEW then refunding verified reviewer declines, and the PAN/KHASH, persistent-token
+and partial-card mapping rules. These accepted rules replace optional capture and
+resolve the earlier policy uncertainty; they do not claim new vendor verification.
+See [current client policy and inputs](CLIENT_INTEGRATION_POLICY.md). The findings
+below preserve the review-time observations; subsequent verification is recorded
+in HANDOFF.md. Runtime changes remain local guidance and evidence assessment, with
+no merchant deployment or payment processing added to the MCP.
+
 ## 1. High: add a signing-key troubleshooting path without weakening verification
 
 **Observed.** The MCP already specifies RSA-PSS/SHA-256, salt length 32, and

@@ -68,7 +68,7 @@ export const integrationPolicy = {
       { env: 'KOUNT_FALLBACK_DECISION', feature: 'evaluation fallback only', secret: false },
       {
         env: 'KOUNT_WEBHOOK_PUBLIC_KEY',
-        feature: 'signed Kount webhooks when enabled',
+        feature: 'signature verification for the required client webhook processor',
         secret: false,
       },
       { env: 'KOUNT_CHANNEL', feature: 'tenant channel when used', secret: false },

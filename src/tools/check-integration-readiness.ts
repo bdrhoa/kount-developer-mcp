@@ -82,7 +82,16 @@ export function checkIntegrationReadiness(
     ...(input.diagnosticPrivacy
       ? { diagnosticPrivacy: assessDiagnosticPrivacy(input.diagnosticPrivacy) }
       : {}),
-    webhookProcessor: assessWebhookProcessor(input.webhookProcessor),
+    webhookProcessor: assessWebhookProcessor({
+      ...input.webhookProcessor,
+      ...(configuration.configurationUiAvailable !== undefined
+        ? {
+            configurationScreenExists:
+              configuration.configurationUiAvailable ||
+              input.webhookProcessor?.configurationScreenExists === true,
+          }
+        : {}),
+    }),
     ready: null,
     environment: sandbox,
     ...(credentials ? { credentials } : {}),

@@ -201,8 +201,9 @@ Hosted evidence optionally declares `flow: { authorizationHold, failedAttempts,
 refunds }` and `lifecycleEvent` (`authorized_checkout`, `authorization_refused`,
 `authorization_canceled`, `authorization_expired`, `refund_succeeded`,
 `refund_pending`, or `refund_failed`). Subscription checks are conditional;
-undeclared paths remain unverified and explicitly disabled paths are not
-applicable. Non-evaluation deliveries can be assessed without a risk decision.
+undeclared optional paths remain unverified and explicitly disabled optional paths are not
+applicable. Refund subscriptions remain required for captured REVIEW even if
+`flow.refunds` is false; that declaration fails the review refund policy check. Non-evaluation deliveries can be assessed without a risk decision.
 Expiry must come from provider evidence, not merely a cancellation event name.
 
 For hosted Stripe Checkout, pass a consistent set of redacted checkout,
@@ -218,7 +219,7 @@ include lifecycle fixtures for payment, buyer status, fulfillment, and refunds.
 Readiness capability names: `authentication`, `token_lifecycle`,
 `device_data_collection`, `order_evaluation`, `decision_handling`,
 `authorization_updates`, `reversal_updates`, `webhook_verification`,
-`webhook_replay_protection`, `error_handling`, `security`.
+`webhook_replay_protection`, `error_handling`, `retry_policy`, `security`.
 Optional configuration accepts `environment: "sandbox"`, `authorizationFlow:
 "pre" | "post"`, `webhooksEnabled: boolean`, and `deviceCollection: "enabled" |
 "excluded"`. No credential fields are accepted.
@@ -229,6 +230,10 @@ declared authorization flow, DDC, and webhooks. The guide prioritizes
 maintainer-confirmed guidance within its stated scope and surfaces conflicts
 with vendor documentation.
 
+The November 19 client rules and complete synthetic input examples are in
+[client policy and evidence](docs/CLIENT_INTEGRATION_POLICY.md). Guides and generated
+examples return the same structured policy; readiness always remains caller-reported.
+
 ### Client implementation policy
 
 The MCP is general-purpose. OpenShop is a POC reference for one hosted Stripe
@@ -237,6 +242,24 @@ guide and generated examples return `integrationPolicy` as structured
 **maintainer-requested client implementation instructions**, separate from vendor
 contract assertions. Error diagnostics include operation-specific retry and
 fallback guidance; readiness exposes the same policy.
+
+Always create the consuming application's Kount webhook processor and expose its
+actual HTTPS URL to the user. Show the URL display-only in an existing configuration
+screen; creating a new UI is not required. Route existence, endpoint registration,
+key configuration and verified business-event processing are separate checks.
+
+Always capture payment for `REVIEW`, confirm capture and block fulfillment. A verified
+reviewer decline must issue an idempotent refund. Pending or failed refunds remain
+unresolved until provider confirmation. Reviewer approval releases fulfillment after
+capture without capturing again. This maintainer policy supersedes optional capture
+in older POC examples; it does not change the raw vendor schema.
+
+For payment data: full PAN → locally verified Kount KHASH as `paymentToken` with
+`CREDIT_CARD`; otherwise persistent token → `TOKEN`; otherwise available BIN/last4 →
+`CREDIT_CARD` with no invented token; otherwise `NONE` with no payment token.
+Nonpersistent token values must be omitted. Include available BIN/last4 and do not
+invent unavailable data. The MCP accepts redacted availability/KHASH evidence, not
+PAN or real tokens; it does not hash card numbers.
 
 In the **consuming merchant application**, use an established retry library for
 its language to implement exponential backoff with jitter for every API operation,

@@ -340,6 +340,9 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
       };
     return {
       ...base,
+      httpStatus: input.httpStatus ?? null,
+      documentationConflict: undefined,
+      observed: { responseShape: 'webhook_verifier_summary', codeMatchesStatus: null },
       confirmed: [],
       hypotheses: [],
       steps: [],

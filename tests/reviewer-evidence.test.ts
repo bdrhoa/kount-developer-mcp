@@ -26,6 +26,8 @@ const base = integrationEvidence.parse({
   payment: { id: 'p', attemptId: 'a', state: 'captured', fulfillmentAllowed: false },
 });
 const delivery = reviewerDelivery.parse({
+  configuredKeyFingerprint: 'a'.repeat(64),
+  expectedKeyFingerprint: 'a'.repeat(64),
   eventId: 'kount-event',
   eventType: 'business_event',
   attemptId: 'a',
@@ -136,4 +138,28 @@ it('applies reviewer provenance consistently through the Stripe adapter', () => 
   });
   expect(r.decision).toBe('REVIEW');
   expect(r.checks.fulfillment).toBe('failed');
+});
+
+it('keeps historical capture evidence distinct from refund confirmation', () => {
+  const refunded = {
+    ...base,
+    reviewerDelivery: { ...delivery, decision: 'DECLINE' as const },
+    payment: { ...base.payment!, state: 'refunded' as const },
+  };
+  expect(assessIntegrationEvidence(refunded).checks).toMatchObject({
+    paymentOutcome: 'verified',
+    reviewCapture: 'unverified',
+  });
+  expect(
+    assessIntegrationEvidence({
+      ...refunded,
+      payment: { ...refunded.payment, reviewCaptureConfirmed: true },
+    }).checks.reviewCapture,
+  ).toBe('verified');
+  expect(
+    assessIntegrationEvidence({
+      ...base,
+      payment: { ...base.payment!, reviewCaptureConfirmed: false },
+    }).checks.reviewCapture,
+  ).toBe('failed');
 });
