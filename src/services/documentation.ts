@@ -1,3 +1,4 @@
+import { webhookPolicy } from '../resources/v2/webhook-policy.js';
 import { responseFixtures } from '../resources/v2/response-fixtures.js';
 import { reportingRecovery } from '../resources/v2/reporting-recovery.js';
 import {
@@ -42,6 +43,7 @@ export class DocumentationService {
       recommendations: entry.recommendations,
       guidancePrecedence,
       integrationPolicy,
+      webhookPolicy,
       reportingRecovery,
       responseFixtures,
       ...(topic === 'authorization_updates' || topic === 'webhooks'

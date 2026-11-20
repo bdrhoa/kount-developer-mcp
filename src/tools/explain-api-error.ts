@@ -1,3 +1,4 @@
+import { webhookDiagnostics, diagnoseWebhook } from './webhook-diagnostics.js';
 import { diagnoseOrderResponse } from './response-diagnostics.js';
 import { z } from 'zod';
 import { integrationPolicy } from '../resources/v2/integration-policy.js';
@@ -10,7 +11,8 @@ import { operations } from '../schemas/v2/manifest.js';
 
 export const errorInput = z.strictObject({
   httpStatus: z.number().int().min(100).max(599).optional(),
-  operation: z.enum(['token', 'data_only_order', ...Object.keys(operations)]).optional(),
+  webhook: webhookDiagnostics.optional(),
+  operation: z.enum(['webhook', 'token', 'data_only_order', ...Object.keys(operations)]).optional(),
   request: orderRequest.optional(),
   responseBody: z.json().optional(),
   responseContext: z
@@ -168,7 +170,7 @@ const documented: Record<number, { meaning: string; hypotheses: string[]; steps:
     ],
   },
 };
-export function explainApiError(input: z.infer<typeof errorInput>, validation: ValidationService) {
+function explainCommerceApiError(input: z.infer<typeof errorInput>, validation: ValidationService) {
   const requestErrors = input.request ? checkOrderRequest(input.request) : [];
   if (input.request) {
     const expected = input.request.mode === 'status_update' ? 'update_order' : 'evaluate_order';
@@ -318,4 +320,33 @@ export function explainApiError(input: z.infer<typeof errorInput>, validation: V
         }
       : {}),
   };
+}
+
+export function explainApiError(input: z.infer<typeof errorInput>, validation: ValidationService) {
+  const base = explainCommerceApiError({ httpStatus: 200 }, validation);
+  if (input.operation === 'webhook' || input.webhook) {
+    if (
+      (input.operation && input.operation !== 'webhook') ||
+      input.request ||
+      input.requestPayload ||
+      input.retryContext ||
+      input.responseContext ||
+      input.responseBody !== undefined
+    )
+      return {
+        ...base,
+        status: 'blocked',
+        reason: 'Webhook diagnostics cannot be combined with Commerce/token inputs.',
+      };
+    return {
+      ...base,
+      confirmed: [],
+      hypotheses: [],
+      steps: [],
+      operation: 'webhook',
+      webhook: diagnoseWebhook(input.webhook ?? {}),
+      sources: [sources.webhooks],
+    };
+  }
+  return explainCommerceApiError(input, validation);
 }

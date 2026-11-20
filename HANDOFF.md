@@ -7,6 +7,10 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-19 19:14 UTC-07:00 — Codex — Improvement 1: signing diagnostics
+
+- Added summary-only webhook diagnostics to explain_api_error and structured guide policy/fixtures. Distinguishes key mismatch, decoding, raw bytes and environment without algorithm fallback or raw input. Typecheck and 9 targeted tests passed. No live calls. Next: ping separation and mandatory client processor/URL.
+
 ## 2026-11-19 18:57 UTC-07:00 — Codex — New OpenShop session review
 
 - Reviewed Downloads `kount-openshop-session-transcript.md` and OpenShop branch
