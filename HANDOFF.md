@@ -7,6 +7,39 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+
+
+## 2026-11-22T12:27-07:00 — Codex — Commit and sync Get Order
+
+- User authorized commit and sync of the completed Sandbox Get Order change.
+- Reviewed working tree: only the eight expected implementation, test and context
+  files from this task are changed. Prior verification is recorded below; no
+  runtime changes since those checks. Whitespace checked again before commit.
+- This checkpoint is included with the feature commit. Next commands: commit,
+  pull --rebase, push, verify local/remote tips, zero ahead/behind and clean tree.
+- No live order request or publication; restart the MCP server/client to discover
+  get_order. D013 records the authorized read-only Sandbox scope.
+
+## 2026-11-22 12:26 UTC-0700 — Codex — Sandbox Get Order tool
+
+- Added `get_order` in `src/tools/get-order.ts` and registered as a read-only,
+  idempotent network tool. Uses Kount orderId (not merchantOrderId), fixed Sandbox
+  Commerce GET and existing internal bearer-token cache/acquisition. No token input
+  or output. Returns successful order JSON to MCP client; README explains visibility.
+- Rejects unsafe/empty/oversized IDs, redirects, HTTP error bodies, oversized
+  responses and transport failures; 15-second per-request timeout, no order retries.
+  Added D013 under current user authorization; D003 Sandbox scope remains.
+- Official supplied Get Order reference retrieved November 22 confirms GET
+  /v2/orders/{orderId} and k1_integration_api. Existing manifest matches path.
+- Passed build, typecheck, lint, full formatting, all 173 tests and separate 21
+  contract tests using existing fingerprinted cached spec. After additional stdio
+  invocation assertions, reran both affected suites: 19 tests passed. Whitespace
+  check passed. Node 26.3.0 used; repository pin 26.13.0 was not used.
+- No live authentication/order call, publication, commit or push. Started clean
+  master; only this task's source/tests/README/DECISIONS/HANDOFF changes remain.
+- Work complete. Restart MCP client/server to discover eighth tool, then invoke
+  get_order with a known synthetic Sandbox Kount order ID for live verification.
+
 ## 2026-11-19 19:26 UTC-07:00 — Codex — All eight MCP improvements implemented and verified
 
 - Completed eight sequential improvement commits (31b644d through 48153d9) under D012, including mandatory client processor/URL, captured REVIEW/refunds, and payment identity policy. Final follow-up tightens reviewer key identity/historical capture evidence, existing-UI detection, webhook HTTP status, tool descriptions and packaged usage documentation. See docs/CLIENT_INTEGRATION_POLICY.md; original review now links implementation commits.

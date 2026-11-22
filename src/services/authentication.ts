@@ -76,7 +76,7 @@ export class SandboxAuthentication {
       };
     }
   }
-  /** Internal integration point for a future Sandbox adapter. Never expose this as MCP output. */
+  /** Internal integration point for Sandbox order retrieval. Never expose this as MCP output. */
   async getAccessToken(): Promise<string> {
     const result = await this.authenticate();
     if (result.status !== 'authenticated' || !this.#token)

@@ -40,23 +40,37 @@ const calls = [
 
 describe('MCP over actual stdio', () => {
   it.each([false, true])(
-    'discovers seven tools and invokes local flows (modern=%s)',
+    'discovers eight tools and invokes local flows (modern=%s)',
     async (modern) => {
       const { client, transport, stderr } = connection(modern);
       try {
         await client.connect(transport);
         const listed = await client.listTools();
         expect(listed.tools.map((tool) => tool.name).sort()).toEqual(
-          [...calls.map((call) => call.name), 'authenticate_sandbox'].sort(),
+          [...calls.map((call) => call.name), 'authenticate_sandbox', 'get_order'].sort(),
         );
         expect(
           listed.tools
-            .filter((tool) => tool.name !== 'authenticate_sandbox')
+            .filter((tool) => !['authenticate_sandbox', 'get_order'].includes(tool.name))
             .every((tool) => tool.inputSchema.type === 'object' && tool.annotations?.readOnlyHint),
         ).toBe(true);
         expect(
           listed.tools.find((tool) => tool.name === 'authenticate_sandbox')?.annotations,
         ).toMatchObject({ readOnlyHint: false, openWorldHint: true, destructiveHint: false });
+        expect(listed.tools.find((tool) => tool.name === 'get_order')?.annotations).toMatchObject({
+          readOnlyHint: true,
+          idempotentHint: true,
+          openWorldHint: true,
+        });
+        expect(
+          await client.callTool({ name: 'get_order', arguments: { orderId: 'synthetic-id' } }),
+        ).toMatchObject({
+          isError: true,
+          structuredContent: { code: 'authentication_unavailable' },
+        });
+        expect(
+          await client.callTool({ name: 'get_order', arguments: { merchantOrderId: 'wrong' } }),
+        ).toMatchObject({ isError: true });
         for (const call of calls) {
           const result = await client.callTool(call);
           expect(result.isError, call.name).not.toBe(true);

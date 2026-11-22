@@ -170,3 +170,14 @@ with a link to their replacement.
   vendor schema and surface any policy/contract conflicts.
 - **Scope:** D003/D004 network limits remain. These changes instruct consuming
   applications; they do not deploy an OpenShop webhook or process real payments.
+
+## D013 — Read-only Sandbox order retrieval
+
+- **Date:** 2026-11-22
+- **Status:** Accepted; extends D004's authenticated network scope for GET only.
+- **Authority:** Brad requested an MCP function to retrieve an order using a bearer
+  token and clarified that the URL ID is the Kount ID, not merchantOrderId.
+- **Decision:** Add `get_order` using the existing internal Sandbox token service,
+  fixed Commerce GET endpoint, and Kount `orderId`. Return successful order JSON
+  to the MCP client; omit remote error bodies and never expose authentication tokens.
+  D003 Sandbox scope remains; evaluation/update operations remain unimplemented.

@@ -2,7 +2,7 @@
 
 An independent, open-source MCP server that helps developers integrate **Kount
 Payments Fraud v2**. Inspect the API contract, generate and validate synthetic
-requests, authenticate against Sandbox, troubleshoot errors, and check integration
+requests, authenticate against Sandbox, retrieve Sandbox orders, troubleshoot errors, and check integration
 progress from your coding assistant.
 
 **Unofficial community project. Not affiliated with or endorsed by Kount or Equifax.**
@@ -162,6 +162,7 @@ configured or exercised by this build.
 | `generate_order_example`      | `scenario`, optional `mode`, `failedAttempt`, `includeOptionalFields`                              | Synthetic, validator-checked payload and complete Sandbox request URL                                              |
 | `explain_api_error`           | `httpStatus` or transport failure phase, optional `retryContext`, `responseBody`, `requestPayload` | Confirmed status meaning, separate hypotheses and troubleshooting steps                                            |
 | `check_integration_readiness` | `capabilities`, optional `configuration` and redacted `hostedCheckout` evidence                    | Caller-reported passed/failed checks, observed credential/authentication state, manual verification and references |
+| `get_order`                   | `{orderId}` (Kount ID, not merchantOrderId)                                                        | **Network-enabled, read-only:** returns Sandbox order JSON using an internal bearer token                          |
 | `authenticate_sandbox`        | `{}`                                                                                               | **Network-enabled:** obtains/caches a Sandbox token from local credentials; returns status and expiry only         |
 
 `explain_api_error` accepts an optional `operation` for token and Commerce
@@ -281,7 +282,7 @@ configuration should produce a clear error. Use ENV variables normally; a config
 configuration UI already exists, update it to include all ENV settings needed by enabled integration features, with
 matching validation, defaults, secret protection and documented precedence.
 These variables are instructions for client implementations; they do not
-configure this MCP process, which still implements token acquisition only.
+configure this MCP process, which implements token acquisition and read-only Sandbox order retrieval.
 
 Readiness adds the `retry_policy` capability; UI coverage is an optional check. Optional
 `configuration` accepts `maxRetries`, `fallbackDecision`, and
@@ -336,9 +337,25 @@ Example prompts:
 - “Check readiness for authentication, order_evaluation and authorization_updates.”
 
 The server performs no order evaluation/update requests and does not calculate a
-fraud decision. The Sandbox adapter interface is reserved for future order API
-operations. Sandbox authentication is implemented in this release at the user's
-request.
+fraud decision. `get_order` performs read-only Sandbox retrieval.
+
+### Retrieve a Sandbox order
+
+Invoke `get_order` with `{"orderId":"d121ea2210434ffc8a90daff9cc97e76"}`.
+Use the **Kount-generated order ID**, not `merchantOrderId`. The tool acquires or
+reuses the in-memory Sandbox bearer token from local credentials and sends
+`GET https://api-sandbox.kount.com/commerce/v2/orders/{orderId}`. No token argument
+is accepted. Success returns `{status: "retrieved", environment: "sandbox", order}`
+with the API JSON, which can contain customer data and is visible to your MCP
+client/model provider. Use synthetic Sandbox orders. IDs accept letters, digits,
+underscores and hyphens (up to 256 characters), a local input safety limit.
+
+HTTP errors return status/code and HTTP status without remote error bodies.
+Requests reject redirects, time out after 15 seconds per network request and
+limit order responses to 1 MiB. There are no automatic order retries or 401
+replays; an authentication failure prevents the GET. Expiring tokens refresh
+through the existing authentication service. Production remains unsupported.
+Contract: [Kount Get Order](https://api.kount.com/commerce/help#operation/CommerceOrchestrator_GetOrder).
 
 ## Validation meaning and limits
 
@@ -374,7 +391,9 @@ the only observed network authentication evidence in this release.
 - Local stdio only; no HTTP listener, database, vector store, or hosted service.
 - The six local tools work without credentials and make no network requests.
 - `authenticate_sandbox` sends the configured API key only to the fixed Sandbox
-  token endpoint when explicitly invoked. No production API requests are implemented.
+  token endpoint when authentication or order retrieval is invoked. `get_order` sends
+  the bearer token only to the fixed Sandbox Commerce endpoint; redirects are rejected.
+  No production API requests are implemented.
 - `--fetch-schema` is a separate explicit public-documentation download command.
 - No request payload logging, token logging, token files, or secret tool outputs.
 - MCP inputs have local limits of 256 KiB serialized JSON and depth 32. These
@@ -397,7 +416,7 @@ npm run format:check
 
 Run `npm run schema:fetch` before the tests. Contract tests intentionally use the
 fingerprinted official specification instead of a permissive mock. Tests make
-no live authentication or order requests; authentication tests use synthetic
+no live authentication or order requests; authentication and retrieval tests use synthetic
 credentials and controlled fetch responses. MCP tests cover modern 2026-07-28
 and legacy handshakes, discovery, invocation, malformed input, missing schemas
 and secret-safe failures.

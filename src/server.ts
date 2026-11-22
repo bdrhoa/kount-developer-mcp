@@ -14,13 +14,15 @@ import { SandboxAuthentication } from './services/authentication.js';
 import { authenticateInput, authenticateSandbox } from './tools/authenticate-sandbox.js';
 import { guidancePrecedence } from './resources/v2/knowledge.js';
 
+import { getOrderInput, getOrder } from './tools/get-order.js';
+
 export const version = '0.1.0';
 export function createServer(schemaPath?: string): McpServer {
   const server = new McpServer(
     { name: 'kount-developer-mcp', version },
     {
       instructions:
-        'Unofficial community project, unaffiliated with Kount or Equifax. Target Sandbox only: token URL https://login-uat.equifax.com/as/token; API base https://api-sandbox.kount.com. Use synthetic data. Configure credentials only through local KOUNT_CLIENT_ID and KOUNT_API_KEY environment variables, never chat or tool arguments. Only authenticate_sandbox makes a network call, to the fixed Sandbox token endpoint. The other tools are local. No order API calls are implemented. Treat indeterminate and unavailable validation as unresolved. ' +
+        'Unofficial community project, unaffiliated with Kount or Equifax. Target Sandbox only: token URL https://login-uat.equifax.com/as/token; API base https://api-sandbox.kount.com. Use synthetic data. Configure credentials only through local KOUNT_CLIENT_ID and KOUNT_API_KEY environment variables, never chat or tool arguments. authenticate_sandbox calls the fixed Sandbox token endpoint; get_order reads a Sandbox order using an internal bearer token. Other tools are local. get_order requires the Kount order ID, not merchantOrderId; returned order data is visible to the MCP client. Treat indeterminate and unavailable validation as unresolved. ' +
         guidancePrecedence +
         ' In client integrations, use an established retry library appropriate to the implementation language for exponential backoff with jitter on all API calls. Make KOUNT_MAX_RETRIES and KOUNT_FALLBACK_DECISION ENV-configurable and expose every needed integration ENV setting in an existing configuration UI. Otherwise use ENV variables normally; do not require creating a UI. Apply an attributed APPROVE (default) or DECLINE fallback only when the Evaluate Order POST ends without a usable decision. These are instructions for the client implementation, not MCP runtime settings. Always capture REVIEW payment while blocking fulfillment, and issue a provider-confirmed refund after a verified reviewer decline. Always create the client webhook processor, expose its HTTPS URL, and show the URL display-only in an existing configuration screen. OpenShop is one POC, not the target architecture.',
     },
@@ -36,6 +38,7 @@ export function createServer(schemaPath?: string): McpServer {
     inputSchema: z.ZodObject<T>,
     run: (input: z.infer<z.ZodObject<T>>) => unknown,
     networkEnabled = false,
+    readOnly = !networkEnabled,
   ): void {
     server.registerTool(
       name,
@@ -43,9 +46,9 @@ export function createServer(schemaPath?: string): McpServer {
         description,
         inputSchema,
         annotations: {
-          readOnlyHint: !networkEnabled,
+          readOnlyHint: readOnly,
           destructiveHint: false,
-          idempotentHint: !networkEnabled,
+          idempotentHint: readOnly,
           openWorldHint: networkEnabled,
         },
       },
@@ -119,6 +122,14 @@ export function createServer(schemaPath?: string): McpServer {
     'Network-enabled: obtain and cache a bearer token from https://login-uat.equifax.com/as/token using local KOUNT_CLIENT_ID and KOUNT_API_KEY environment configuration. Never returns a token or credential value. No arguments and no order API calls.',
     authenticateInput,
     () => authenticateSandbox(authentication),
+    true,
+  );
+  register(
+    'get_order',
+    'Network-enabled, read-only: retrieve a Sandbox order by Kount orderId, NOT merchantOrderId. Acquires/reuses a bearer token from local environment credentials internally. Returns order data to the MCP client; never pass tokens as arguments.',
+    getOrderInput,
+    (input) => getOrder(input, authentication),
+    true,
     true,
   );
   return server;
