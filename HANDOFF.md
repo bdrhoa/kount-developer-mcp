@@ -11,6 +11,59 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+
+
+
+## 2026-11-22T13:27-07:00 — Codex — Commit and sync general client setup
+
+- User authorized commit/sync of D015, general Claude Code README instructions,
+  reusable launch example and accumulated credential-setup checkpoints.
+- Reviewed only four expected repository files changed; whitespace passed.
+  Prior entry records formatting and actual SDK discovery/authentication checks;
+  no runtime changes or additional live requests in this turn.
+- Commit includes this checkpoint; next commands are pull --rebase, push and
+  verification of matching local/remote tips, zero ahead/behind and clean tree.
+- Private user configuration and credential files stay outside Git. Interactive
+  Claude Code reconnect remains the user's next step.
+
+## 2026-11-22T13:27-07:00 — Codex — General Claude Code setup
+
+- D015 records user's correction: general MCP use, no OpenShop-specific setup.
+  README now recommends user-scoped registration with explicit private credential
+  file and absolute executable/server paths. Updated examples/claude.mcp.json;
+  inherited ENV and optional project scope remain documented. No runtime changes.
+- Backed up ~/.claude.json and the prior-turn OpenShop .mcp.json privately under
+  ~/.local/share/kount-developer-mcp/backups (0600 files). Used installed Claude
+  CLI to add kount-developer at --scope user. Removed only the project .mcp.json
+  created in prior turn after confirming it matched the new user registration.
+  OpenShop working tree is clean. Existing Desktop entry was not changed.
+- Official Claude Code MCP docs verified user-scope syntax and precedence.
+  Actual user configuration tested via SDK stdio from /tmp with parent credential
+  variables removed: discovered ten tools; authenticate_sandbox authenticated.
+  No order lookup; interactive Claude Code reconnect still required/unverified.
+- Full formatting and whitespace checks passed. No runtime/test changes, so no
+  application suite rerun. No commit/push/publication. MCP tree contains README,
+  example, DECISIONS and HANDOFF modifications (including prior checkpoint).
+- Complete; reconnect/restart Claude Code and use /mcp. User-scope server applies
+  across projects unless a higher-priority same-name local/project entry exists.
+
+## 2026-11-22T13:21-07:00 — Codex — OpenShop MCP credential launch fix
+
+- User identified failing client as Claude Code in OpenShop. Local OpenShop root
+  had no .mcp.json; Claude global/project config had no Kount server entry.
+  Existing Desktop Kount entry passes neither env block nor env-file. Exact
+  active session launch source remains unverified.
+- Created uncommitted OpenShop .mcp.json using the installed private Node and
+  explicit --env-file under ~/.local/share/kount-developer-mcp/sandbox.env.
+  Credential file created exclusively with mode 0600 from available environment;
+  no values printed or placed in repository. No existing files overwritten.
+- Verified configured launch sees both credential flags with parent variables
+  removed. Launched real stdio MCP using this config and authenticate_sandbox
+  succeeded (authenticated true, cached false). No order lookup performed.
+- Existing Claude Code session must reconnect/restart and approve project MCP
+  config if prompted; live session reload remains unverified. OpenShop .mcp.json
+  is untracked; this MCP handoff is modified. No commit/push.
+
 ## 2026-11-22T13:02-07:00 — Codex — Commit and sync focused order tools
 
 - User authorized commit and sync of get_order_status and get_device_id.

@@ -196,3 +196,15 @@ with a link to their replacement.
   unsupported shapes remain unresolved. No update completion or payment effects
   are inferred from a current decision. Sandbox scope and internal bearer handling
   remain unchanged.
+
+## D015 — Project-independent Claude Code registration
+
+- **Date:** 2026-11-22
+- **Status:** Accepted; applies D009's general-purpose scope to client setup.
+- **Authority:** Brad requested general Claude Code support instead of OpenShop
+  specific configuration.
+- **Decision:** Recommend user-scoped Claude Code registration and an explicit
+  absolute Node --env-file path to private credentials outside repositories.
+  Document inherited ENV precedence, diagnostic authentication and scope conflicts.
+  Keep the MCP runtime project-independent; no merchant-specific credential discovery.
+  Project-scoped configuration remains an optional example, not required setup.

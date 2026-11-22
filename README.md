@@ -124,33 +124,50 @@ Configuration format verified against [official Codex MCP documentation](https:/
 
 ## Connect Claude Code
 
-Merge [examples/claude.mcp.json](examples/claude.mcp.json) into the consuming
-project's `.mcp.json`, replacing the path:
+Register the server once at **user scope** to use it in every project, without
+adding files to consuming repositories. Keep credentials in a private file
+outside repositories (for example `~/.config/kount-developer-mcp/sandbox.env`),
+containing `KOUNT_CLIENT_ID` and `KOUNT_API_KEY`. Create the directory with mode
+`700` and the file with mode `600`, then fill values locally using `.env.example`
+as the key-name template. Never put credential values in the registration command.
 
-```json
-{
-  "mcpServers": {
-    "kount-developer": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/absolute/path/to/kount-developer-mcp/dist/index.js"],
-      "env": {
-        "KOUNT_CLIENT_ID": "${KOUNT_CLIENT_ID:-}",
-        "KOUNT_API_KEY": "${KOUNT_API_KEY:-}"
-      }
-    }
-  }
-}
+After building the MCP, replace all three paths below with absolute paths on
+your machine. The Node executable must satisfy the supported Node version above.
+
+```sh
+claude mcp add --transport stdio --scope user kount-developer -- \
+  /absolute/path/to/node \
+  --env-file=/absolute/path/to/private/kount-sandbox.env \
+  /absolute/path/to/kount-developer-mcp/dist/index.js
 ```
 
-Use `/mcp` to inspect the connection. Empty variable defaults permit use of the
-local tools before credentials are configured. When using `--env-file`, remove
-the `env` block: Node gives inherited environment variables precedence over file
-values, including empty values. See [official Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+Claude Code stores user-scoped registrations in `~/.claude.json`. This launch
+loads credentials independently of the project directory and the environment
+that started Claude Code. It works with the existing Node CLI; the MCP does not
+search merchant repositories for `.env` files or contain project-specific paths.
+Node still gives inherited environment variables precedence over file values,
+including empty values: remove stale/empty `KOUNT_*` overrides if they are set.
 
-These formats were checked against current documentation. Automated tests use
-the official SDK client; actual Codex and Claude Code sessions have not been
-configured or exercised by this build.
+Restart/reconnect the MCP server and use `/mcp` to inspect the connection. Invoke
+`authenticate_sandbox` with `{}` to verify credential-presence flags and token
+acquisition without returning secrets. Order tools acquire tokens automatically;
+calling authentication explicitly is a diagnostic step, not a prerequisite.
+
+[examples/claude.mcp.json](examples/claude.mcp.json) contains the equivalent
+credential-file launch definition for manual configuration. Use it in user config
+or, only when project-scoped setup is desired, merge it into a project's
+`.mcp.json`. Replace all absolute paths. No `env` block is needed with this
+credential-file approach. Shell-inherited credentials remain supported by omitting
+`--env-file` and exporting both variables before launching Claude Code.
+
+Local and project-scoped entries with the same name override user scope. Remove
+obsolete duplicate entries only after inspecting them. Back up existing client
+configuration before editing it. See [official Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+
+The SDK stdio client has verified this user-scoped launch from an unrelated
+working directory with both credential variables removed from the parent
+process: all ten tools were discovered and Sandbox authentication succeeded.
+Interactive Claude Code session reload remains unverified.
 
 ## Tools and developer workflow
 
