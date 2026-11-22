@@ -181,3 +181,18 @@ with a link to their replacement.
   fixed Commerce GET endpoint, and Kount `orderId`. Return successful order JSON
   to the MCP client; omit remote error bodies and never expose authentication tokens.
   D003 Sandbox scope remains; evaluation/update operations remain unimplemented.
+
+## D014 — Focused order observations
+
+- **Date:** 2026-11-22
+- **Status:** Accepted; extends D013 with two read-only wrappers.
+- **Authority:** Brad proposed get_order_status for REVIEW/APPROVE/DECLINE checks
+  and get_device_id as an indicator of DDC implementation, explicitly qualifying
+  the inference from a missing device ID.
+- **Decision:** Reuse get_order internally for fresh Sandbox observations of
+  order.riskInquiry.decision and order.riskInquiry.device.id. Return only the
+  focused result. Missing device IDs suggest a possible DDC issue, not proof;
+  present IDs do not certify complete integration. Missing/unknown decisions and
+  unsupported shapes remain unresolved. No update completion or payment effects
+  are inferred from a current decision. Sandbox scope and internal bearer handling
+  remain unchanged.

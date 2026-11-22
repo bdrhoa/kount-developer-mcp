@@ -9,6 +9,42 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+
+
+## 2026-11-22T13:02-07:00 — Codex — Commit and sync focused order tools
+
+- User authorized commit and sync of get_order_status and get_device_id.
+- Reviewed tree: only the seven expected source, test and context files changed.
+  Prior entry records all 225 tests and required checks passing; no runtime changes
+  since verification. Rechecked whitespace before commit.
+- Checkpoint included in feature commit. Next: commit, pull --rebase, push and
+  verify remote SHA, zero ahead/behind counts and clean working tree.
+- No live Kount requests or publication; restart MCP server/client for discovery.
+
+## 2026-11-22T12:51-07:00 — Codex — Focused order status and device observations
+
+- Added get_order_status and get_device_id in src/tools/order-observations.ts,
+  registered in src/server.ts. Both invoke the existing getOrder handler with
+  Kount orderId and internal bearer authentication; one fresh Sandbox GET each.
+- Verified API nesting against live official Sandbox Get Order documentation and
+  pinned contract: order.riskInquiry.decision and order.riskInquiry.device.id.
+  Missing/unknown decisions remain unverified. Absent/null/blank device IDs flag
+  possible DDC issues using maintainer guidance, never conclusive failure. Present
+  IDs do not certify the complete integration. Array inquiries remain unsupported
+  with explicit diagnostics; no record chosen from conflicting response shapes.
+- Returns focused fields only; authentication/HTTP/transport failures propagate
+  without decision or DDC findings. Current decisions do not prove specific
+  update completion or downstream payment/fulfillment. README and D014 updated.
+- Passed build, typecheck, lint, full formatting, all 225 tests and separate
+  21 contract tests using existing fingerprinted cache. Tests include fresh
+  REVIEW-to-APPROVE reads, missing/invalid fields, response envelopes, failures,
+  privacy and modern/legacy stdio discovery/invocation for ten tools.
+- No live auth/order call, commit, push or publication. Started clean master
+  at 85f03ad; only this task's source, tests, README, DECISIONS and HANDOFF changed.
+  Existing Node 26.3.0 used; repository pin 26.13.0 not used.
+- Complete; restart MCP server/client to discover the two new tools. A known
+  synthetic Sandbox order can be used for later live verification.
+
 ## 2026-11-22T12:27-07:00 — Codex — Commit and sync Get Order
 
 - User authorized commit and sync of the completed Sandbox Get Order change.

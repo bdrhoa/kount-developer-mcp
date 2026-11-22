@@ -162,6 +162,8 @@ configured or exercised by this build.
 | `generate_order_example`      | `scenario`, optional `mode`, `failedAttempt`, `includeOptionalFields`                              | Synthetic, validator-checked payload and complete Sandbox request URL                                              |
 | `explain_api_error`           | `httpStatus` or transport failure phase, optional `retryContext`, `responseBody`, `requestPayload` | Confirmed status meaning, separate hypotheses and troubleshooting steps                                            |
 | `check_integration_readiness` | `capabilities`, optional `configuration` and redacted `hostedCheckout` evidence                    | Caller-reported passed/failed checks, observed credential/authentication state, manual verification and references |
+| `get_order_status`            | `{orderId}` (Kount ID)                                                                             | Fresh Sandbox decision: REVIEW, APPROVE, DECLINE, or an unresolved diagnostic                                      |
+| `get_device_id`               | `{orderId}` (Kount ID)                                                                             | Fresh Sandbox device ID and a qualified DDC diagnostic                                                             |
 | `get_order`                   | `{orderId}` (Kount ID, not merchantOrderId)                                                        | **Network-enabled, read-only:** returns Sandbox order JSON using an internal bearer token                          |
 | `authenticate_sandbox`        | `{}`                                                                                               | **Network-enabled:** obtains/caches a Sandbox token from local credentials; returns status and expiry only         |
 
@@ -357,6 +359,34 @@ replays; an authentication failure prevents the GET. Expiring tokens refresh
 through the existing authentication service. Production remains unsupported.
 Contract: [Kount Get Order](https://api.kount.com/commerce/help#operation/CommerceOrchestrator_GetOrder).
 
+### Check decision and device collection
+
+Both `get_order_status` and `get_device_id` accept the same `{"orderId":"KOUNT_ORDER_ID"}`
+input as `get_order`, reuse its handler and internal bearer authentication, and
+perform one fresh Sandbox order GET per invocation. They return only the relevant
+observation, not the full order or customer fields.
+
+- `get_order_status` reads API field `order.riskInquiry.decision` and returns
+  `decision` (`REVIEW`, `APPROVE`, or `DECLINE`) and `inReview`. Missing or unexpected
+  values return `status: "unverified"`, `decision: null`, and a diagnostic code.
+  Repeated calls can observe a decision change; a single result cannot prove
+  which update caused it or that payment/fulfillment completed.
+- `get_device_id` reads `order.riskInquiry.device.id` and returns `deviceId`,
+  `deviceIdPresent`, and `ddcAssessment`. Missing, null, empty or whitespace IDs
+  return `deviceId: null` and `possible_ddc_issue`: no device ID was returned,
+  making missing collection a likely integration issue under maintainer guidance,
+  but not proof. Check DDC execution, session correlation and collection timing.
+  A present device ID is evidence for this order, not certification of the full
+  DDC implementation. Invalid field types remain unverified, not absent.
+
+The field paths above are relative to the API response; `get_order` wraps that
+JSON in its own `order` result property. These tools require the API's `order`
+envelope and object-shaped `riskInquiry`. Arrays (including a single item) return
+`unsupported_inquiry_array` without choosing a record; the reference's known
+object/array conflict remains unresolved. Authentication, HTTP and transport
+failures propagate without making any decision or DDC finding. No polling,
+merchant updates, or additional retry behavior is added.
+
 ## Validation meaning and limits
 
 - `valid: true`, `status: "valid"`: passes the retrieved OpenAPI assertions and
@@ -391,7 +421,7 @@ the only observed network authentication evidence in this release.
 - Local stdio only; no HTTP listener, database, vector store, or hosted service.
 - The six local tools work without credentials and make no network requests.
 - `authenticate_sandbox` sends the configured API key only to the fixed Sandbox
-  token endpoint when authentication or order retrieval is invoked. `get_order` sends
+  token endpoint when authentication or order retrieval is invoked. `get_order` and its status/device wrappers send
   the bearer token only to the fixed Sandbox Commerce endpoint; redirects are rejected.
   No production API requests are implemented.
 - `--fetch-schema` is a separate explicit public-documentation download command.
