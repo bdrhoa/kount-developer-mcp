@@ -312,7 +312,7 @@ Missing UI evidence is `unverified`; an explicitly absent UI is `not_applicable`
 The comparison cannot establish that the supplied ENV inventory is complete or
 that settings are saved and applied correctly.
 
-Guides include `reportingRecovery`: a client outbox/recovery recipe and synthetic
+The `authorization_updates` guide includes `reportingRecovery`: a client outbox/recovery recipe and synthetic
 failure/restart scenarios. Readiness accepts optional `reporting` evidence with
 `operation`, `state` (`pending`, `confirmed`, `rejected`, `unknown`), optional
 `lastOutcome`, and booleans for `durableIntent`, `independentRecovery`,
@@ -327,7 +327,7 @@ request descriptor). `jsonParsed: false` records decoding failure without sendin
 raw text. `responseDiagnostics` reports usable/missing/unknown decisions,
 identifier presence and object/array conflicts without echoing identifier values.
 Data-only acknowledgments need an order identifier, not a risk decision; PATCH
-acknowledgment semantics remain explicitly unverified. Guides return original
+acknowledgment semantics remain explicitly unverified. The `order_evaluation` guide returns original
 synthetic `responseFixtures` with provenance; these are not live acceptance tests.
 
 Readiness also accepts provider-neutral `integrationEvidence`. Supply `attemptId`,
@@ -550,3 +550,51 @@ Architecture: `src/index.ts` owns CLI/stdio, `src/server.ts` registers tools,
 `src/tools/` contains handlers, `src/services/` contains shared documentation,
 schema, validation and authentication logic, `src/schemas/v2/` records the verified
 contract fingerprint, and `src/resources/v2/` contains concise original guidance.
+
+## November 23 integration guidance improvements
+
+`get_integration_guide` accepts `{}` and defaults to `overview`. Responses now
+include only topic-specific details. Request `policy` for the full shared client
+policy and reliability fixtures, `webhooks` for verifier/key-format guidance,
+`authorization_updates` for reporting recovery, and `order_evaluation` for response
+fixtures. All responses link to `policy` through `policyTopic`.
+
+Client guidance recommends one `KOUNT_ENVIRONMENT` selector for coordinated
+API/token/DDC settings, with environment-scoped credentials and token caches.
+The MCP runtime stays Sandbox-only. Client implementations use the following
+maintainer-confirmed mapping, defaulting to `SANDBOX`:
+
+| `KOUNT_ENVIRONMENT` | DDC    | Login URL                                | Orders URL                                         |
+| ------------------- | ------ | ---------------------------------------- | -------------------------------------------------- |
+| `SANDBOX`           | `TEST` | `https://login-uat.equifax.com/as/token` | `https://api-sandbox.kount.com/commerce/v2/orders` |
+| `PRODUCTION`        | `PROD` | `https://login.equifax.com/as/token`     | `https://api.kount.com/commerce/v2/orders`         |
+
+UAT and Sandbox are synonymous when conversing with humans; configuration uses
+`SANDBOX|PRODUCTION`. Append `?riskInquiry=true` for risk evaluation or
+`?riskInquiry=false` for data-only submission. Select this per operation,
+independently of environment. These mappings are maintainer-confirmed, not live
+production verification. Existing client overrides need an explicit migration.
+Guides expose `clientEnvironmentConfiguration`; the `policy` topic includes it
+under `integrationPolicy.configuration.environmentMapping`. Readiness accepts
+`configuration.environment` as `SANDBOX|PRODUCTION` (legacy lowercase also accepted)
+without changing its top-level Sandbox MCP runtime target.
+
+Readiness always reports `providerDelivery` checks (missing evidence is unverified).
+Optional input includes `registeredUrl`, `deployedUrl`, `requiredEvents`,
+`subscribedEvents`, `requiredEventsReviewedForFlow`, `lastDeliveryAgeMs`,
+`maxDeliveryAgeMs`, `handlerReached`, `signatureVerified`, `processed`,
+`evaluationObserved`, `evaluationCorrelatedToDelivery`, `usableKountDecision`, and
+`evidenceOrigin`. Review required events for the actual flow; an empty list cannot
+pass. Only caller-reported `sandbox_observed` evidence can verify the aggregate;
+`ready` still remains null. These checks make no network requests.
+
+Reliability evidence adds `refund_callback_reads_pre_decline_state`, requiring
+`terminalStatePreserved`, `provenanceValidated`, `fulfillmentBlocked`, plus existing
+fault-injection/callback/no-duplicate checks. This is a client acceptance schedule,
+not a claim that this MCP fixed the consuming application's storage.
+
+See [the transcript assessment](docs/MCP_POC_REVIEW_2026-11-23.md) for evidence,
+limitations and treatment of the reported live Sandbox outcomes. Deployment-run
+evidence already exists under readiness `reporting.deployment`; use last-run age,
+configured age budget, revision and trigger observations rather than adding a
+second scheduler interface.

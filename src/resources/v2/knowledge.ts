@@ -5,6 +5,7 @@ export const topics = [
   'authorization_updates',
   'webhooks',
   'overview',
+  'policy',
 ] as const;
 export type Topic = (typeof topics)[number];
 export type Source = {
@@ -83,12 +84,21 @@ export const openShopRefundEvidence = {
 };
 export type Guidance = { requirements: string[]; recommendations: string[]; sourceIds: string[] };
 export const guidance: Record<Topic, Guidance> = {
+  policy: {
+    requirements: [
+      'Apply the existing maintainer-requested client integration policy; this does not configure the MCP runtime.',
+    ],
+    recommendations: ['Use topic-specific guides for implementation details and evidence limits.'],
+    sourceIds: ['integration', 'webhooks'],
+  },
   overview: {
     requirements: [
       'Payments Fraud v2 combines device collection with server-side order data. A risk inquiry can return APPROVE, DECLINE, or REVIEW.',
       'This MCP server provides local guidance and validation plus explicit Sandbox authentication; it never evaluates fraud risk.',
     ],
-    recommendations: ['Review documentation conflicts before implementing an integration.'],
+    recommendations: [
+      'Review documentation conflicts before implementing an integration. Read policy for general client rules; use topic-specific guides for details. Before adding provider webhooks, inventory existing routes and registrations, verify exact URL/event subscriptions and a recent authenticated delivery correlated to an actual Sandbox evaluation. Use readiness providerDelivery evidence.',
+    ],
     sourceIds: ['integration', 'commerce'],
   },
   authentication: {

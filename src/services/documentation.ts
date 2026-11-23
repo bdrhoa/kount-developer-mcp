@@ -13,7 +13,7 @@ import {
 import type { DocumentationIssue, Guidance, Source, Topic } from '../resources/v2/knowledge.js';
 import { hostedCheckoutLifecycle } from '../resources/v2/hosted-checkout.js';
 import { integrationPolicy } from '../resources/v2/integration-policy.js';
-import { sandbox } from '../resources/v2/environment.js';
+import { sandbox, clientEnvironmentConfiguration } from '../resources/v2/environment.js';
 
 export class DocumentationService {
   constructor(
@@ -40,14 +40,19 @@ export class DocumentationService {
       apiVersion,
       topic,
       environment: sandbox,
+      ...(['overview', 'authentication', 'device_data_collection', 'order_evaluation'].includes(
+        topic,
+      )
+        ? { clientEnvironmentConfiguration }
+        : {}),
       requirements: entry.requirements,
       recommendations: entry.recommendations,
       guidancePrecedence,
-      integrationPolicy,
-      webhookPolicy,
-      reportingRecovery,
-      reliabilityFixtures,
-      responseFixtures,
+      policyTopic: 'policy',
+      ...(topic === 'policy' ? { integrationPolicy, reliabilityFixtures } : {}),
+      ...(topic === 'webhooks' ? { webhookPolicy, reliabilityFixtures } : {}),
+      ...(topic === 'authorization_updates' ? { reportingRecovery, reliabilityFixtures } : {}),
+      ...(topic === 'order_evaluation' ? { responseFixtures } : {}),
       ...(topic === 'authorization_updates' || topic === 'webhooks'
         ? { integrationEvidence: [openShopRefundEvidence], hostedCheckoutLifecycle }
         : {}),

@@ -1,3 +1,4 @@
+import { providerDelivery, assessProviderDelivery } from './provider-delivery.js';
 import { reliabilityEvidence, assessReliability } from './reliability-evidence.js';
 import { mappingCoverage, assessMappingCoverage } from './mapping-coverage.js';
 import { diagnosticPrivacy, assessDiagnosticPrivacy } from './diagnostic-privacy.js';
@@ -21,6 +22,7 @@ import type { CredentialStatus } from '../services/credentials.js';
 const settingKeys = z.array(z.string().regex(/^[A-Z][A-Z0-9_]{0,99}$/)).max(100);
 
 export const readinessInput = z.strictObject({
+  providerDelivery: providerDelivery.optional(),
   reliability: reliabilityEvidence.optional(),
   mappingCoverage: mappingCoverage.optional(),
   diagnosticPrivacy: diagnosticPrivacy.optional(),
@@ -37,7 +39,7 @@ export const readinessInput = z.strictObject({
     .optional(),
   configuration: z
     .strictObject({
-      environment: z.literal('sandbox').optional(),
+      environment: z.enum(['SANDBOX', 'PRODUCTION', 'sandbox', 'production']).optional(),
       authorizationFlow: z.enum(['pre', 'post']).optional(),
       webhooksEnabled: z.boolean().optional(),
       deviceCollection: z.enum(['enabled', 'excluded']).optional(),
@@ -75,6 +77,7 @@ export function checkIntegrationReadiness(
   }));
   return {
     assessment: 'self_report_only',
+    providerDelivery: assessProviderDelivery(input.providerDelivery),
     ...(input.reliability ? { reliability: assessReliability(input.reliability) } : {}),
     ...(input.mappingCoverage
       ? { mappingCoverage: assessMappingCoverage(input.mappingCoverage) }

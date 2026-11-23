@@ -64,6 +64,6 @@ it('recognizes durable recovery after a request budget or restart and confirmed 
   const guide = new DocumentationService().get('authorization_updates');
   expect(
     guide.status === 'available' &&
-      guide.reportingRecovery.fixtures.some((fixture) => fixture.scenario.includes('restart')),
+      guide.reportingRecovery!.fixtures.some((fixture) => fixture.scenario.includes('restart')),
   ).toBe(true);
 });

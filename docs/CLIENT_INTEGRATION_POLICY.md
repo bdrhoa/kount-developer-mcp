@@ -208,3 +208,41 @@ duplicate tests do not establish simultaneous-start safety. Do not permanently
 acknowledge a legitimate early callback without a durable recovery disposition.
 Exactly-once remote submissions are not promised. All readiness results remain
 caller-reported and `ready` remains `null`.
+
+## POC-informed configuration and delivery checks
+
+Use one validated client environment selector (for example `KOUNT_ENVIRONMENT`)
+to derive API, token and DDC settings together. Migrate conflicting legacy
+settings explicitly. Isolate credential identities, token caches and refresh
+coordination across environments. The MCP itself stays Sandbox-only. Client `KOUNT_ENVIRONMENT` accepts
+`SANDBOX|PRODUCTION` and defaults to `SANDBOX`. UAT and Sandbox are synonymous
+in human conversation, not separate selectable environments.
+
+| Client environment | DDC    | Login                                    | Orders                                             |
+| ------------------ | ------ | ---------------------------------------- | -------------------------------------------------- |
+| `SANDBOX`          | `TEST` | `https://login-uat.equifax.com/as/token` | `https://api-sandbox.kount.com/commerce/v2/orders` |
+| `PRODUCTION`       | `PROD` | `https://login.equifax.com/as/token`     | `https://api.kount.com/commerce/v2/orders`         |
+
+These mappings were confirmed by the maintainer on November 23; no live
+production verification is implied. For POST, select `riskInquiry=true` to
+request evaluation or `riskInquiry=false` for data-only submission. Keep that
+query choice separate from environment and the shared orders URL.
+
+Inventory existing payment-provider webhook routes and registrations before
+adding a receiver. Verify the exact deployed/registered public URL, subscriptions
+required by the actual flow, and a recent authenticated business event that was
+processed and correlated to a real Sandbox evaluation. Readiness accepts redacted
+`providerDelivery` evidence; mocks, route probes and fallback decisions cannot
+establish that orders reached Kount.
+
+Accept PEM PUBLIC KEY and bare base64 DER SPKI webhook verification keys, including
+pasted literal newline escapes after normalization. Validate the imported RSA key
+and fingerprint canonical SPKI bytes; keep signature algorithm and signed bytes
+unchanged. Bare base64 portal format is reported POC evidence, not a guarantee
+about every portal/environment.
+
+Test a refund callback reading a pre-decline snapshot and writing last. Prevent
+regression through atomic transitions or enforced per-order serialization. Match
+authenticated callbacks to durable refund intent with trusted reviewer provenance;
+arbitrary metadata or a refund alone cannot prove a Kount decline. Preserve
+conflicting decisions for resolution and keep fulfillment blocked.

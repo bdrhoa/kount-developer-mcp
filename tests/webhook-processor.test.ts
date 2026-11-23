@@ -59,7 +59,7 @@ it('pings never establish signing or business-event readiness', () => {
   ).toBe('failed');
   const guide = new DocumentationService().get('webhooks');
   if (guide.status !== 'available') throw new Error('missing');
-  expect(guide.webhookPolicy.ping.instructions).toContain('Never match by substring');
+  expect(guide.webhookPolicy!.ping.instructions).toContain('Never match by substring');
 });
 
 it('uses the existing UI declaration even if nested processor evidence says no screen', () => {

@@ -84,7 +84,7 @@ export function createServer(schemaPath?: string): McpServer {
   }
   register(
     'get_integration_guide',
-    'Get sourced Payments Fraud v2 guidance, recommendations and unresolved documentation conflicts.',
+    'Get topic-scoped Payments Fraud v2 guidance and conflicts. Omitted topic defaults to overview; use policy for general client rules and reliability fixtures.',
     guideInput,
     (input) => getIntegrationGuide(input, docs),
   );

@@ -76,8 +76,8 @@ describe('readiness is a self assessment', () => {
 });
 
 describe('general merchant integration policy', () => {
-  it.each(topics)('delivers client retry and fallback instructions for %s', (topic) => {
-    const result = new DocumentationService().get(topic);
+  it('delivers client retry and fallback instructions through the policy topic', () => {
+    const result = new DocumentationService().get('policy');
     if (result.status !== 'available') throw new Error('Missing guidance');
     expect(result.integrationPolicy).toMatchObject({
       authority: 'maintainer_requested',
@@ -92,8 +92,8 @@ describe('general merchant integration policy', () => {
         appliesTo: 'Evaluate Order POST with riskInquiry=true only',
       },
     });
-    expect(result.integrationPolicy.retries.strategy).toContain('jitter');
-    expect(result.integrationPolicy.evaluationFallback.effects).toContain('REVIEW');
+    expect(result.integrationPolicy!.retries.strategy).toContain('jitter');
+    expect(result.integrationPolicy!.evaluationFallback.effects).toContain('REVIEW');
   });
   it('compares client UI inventory against all declared ENV keys and policy settings', () => {
     const result = checkIntegrationReadiness({

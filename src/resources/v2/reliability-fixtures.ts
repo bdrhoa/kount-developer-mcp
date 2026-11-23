@@ -4,6 +4,7 @@ export const reliabilityScenarios = [
   'early_callback',
   'conflicting_reviewer',
   'refund_before_save',
+  'refund_callback_reads_pre_decline_state',
 ] as const;
 export const reliabilityFixtures = {
   authority: 'maintainer_requested',
@@ -11,7 +12,23 @@ export const reliabilityFixtures = {
     'Language-neutral client acceptance schedules. Use synthetic local provider doubles; no live payment or Kount request is required.',
   instructions:
     'Implement each schedule with barriers/fault injection in the client test harness. Atomic claim/serialization must fit the client storage consistency model. Read-then-write flags and sequential redelivery tests do not prove concurrency safety. Never promise exactly-once remote writes without a verified provider contract.',
+  stateConsistency:
+    'For eventually consistent stores, a callback can read a pre-decision snapshot and overwrite a newer state. Use atomic compare-and-swap, transactions, a serialized per-order owner or a durable queue with an enforced single writer. Read-then-write flags and metadata alone do not prevent lost updates. Preserve verified decision provenance in durable refund intent and correlate authenticated provider callbacks to that intent, order, payment and refund. Arbitrary refund metadata or a refund alone never proves a Kount decline. Detect conflicting terminal decisions and escalate while blocking fulfillment.',
   scenarios: [
+    {
+      id: 'refund_callback_reads_pre_decline_state',
+      steps: [
+        'Save a captured REVIEW snapshot with review open; hold a copy for a provider callback.',
+        'Process a verified reviewer decline, persist its provenance and refund intent, and confirm the synthetic refund.',
+        'Deliver an authenticated correlated refund callback using the pre-decline snapshot; force its write last, then restart and redeliver.',
+        'Repeat with unrelated refund metadata, missing decision provenance, and a conflicting approved review.',
+      ],
+      expected: [
+        'Matching verified intent converges to declined and refunded with fulfillment blocked; the stale write cannot reopen review.',
+        'Unrelated or untrusted metadata cannot establish a reviewer decline; missing provenance stays unresolved.',
+        'Conflicting approval is retained and escalated without releasing fulfillment or repeating payment effects.',
+      ],
+    },
     {
       id: 'simultaneous_checkout',
       steps: [

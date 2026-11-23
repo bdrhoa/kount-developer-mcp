@@ -1,3 +1,4 @@
+import { clientEnvironmentConfiguration } from './environment.js';
 import { paymentPolicy } from './payment-policy.js';
 import { webhookPolicy } from './webhook-policy.js';
 /** Maintainer-requested integration policy, not a claim about the vendor contract. */
@@ -61,6 +62,12 @@ export const integrationPolicy = {
     environment:
       'Both policy settings must be configurable through ENV variables. Validate values centrally; reject invalid configuration with a clear error rather than silently changing policy.',
     ui: 'Use ENV variables normally. Creating a configuration UI is not required. Only when the consuming application already has a configuration UI, update it to include every environment setting needed for its enabled integration features. Use the same setting definitions, defaults, validation and precedence as ENV configuration. Mask secrets, restrict server-side access, show effective non-secret values, and surface save failures. Test that UI and ENV changes affect the next operation or document required restarts.',
+    environmentMapping: clientEnvironmentConfiguration,
+    environmentSelection: [
+      'Use one validated client environment selector KOUNT_ENVIRONMENT=SANDBOX or PRODUCTION, default SANDBOX, to derive token URL, API base and browser DDC mode together. Reject unknown values and conflicting legacy overrides; migrate existing settings explicitly.',
+      'Use the maintainer-confirmed environmentMapping for client token/API/DDC configuration. UAT and Sandbox mean the same environment in conversation. The MCP runtime and generated requests remain Sandbox-only; production client support uses separate production credentials. riskInquiry=true or false is selected per operation, independently of environment.',
+      'Scope credentials, cached tokens and concurrent refresh ownership by environment, token URL and credential identity/version. Invalidate on credential change; never reuse Sandbox tokens in production or print secrets as cache keys.',
+    ],
     inventory: [
       { env: 'KOUNT_CLIENT_ID', feature: 'authentication and device collection', secret: false },
       { env: 'KOUNT_API_KEY', feature: 'authentication', secret: true },
@@ -73,8 +80,8 @@ export const integrationPolicy = {
       },
       { env: 'KOUNT_CHANNEL', feature: 'tenant channel when used', secret: false },
       {
-        env: 'KOUNT_DDC_ENVIRONMENT',
-        feature: 'browser device collection when enabled',
+        env: 'KOUNT_ENVIRONMENT',
+        feature: 'single client environment selector; derive token/API/DDC configuration together',
         secret: false,
       },
     ],

@@ -14,6 +14,75 @@ entries below this introduction; preserve earlier notes. Use
 
 
 
+## 2026-11-23 14:53 UTC-0700 — Codex — Commit and sync POC improvements
+
+- User authorized commit and sync of completed general MCP improvements and
+  explicit client environment mappings (D016/D017).
+- Reviewed working tree: only the expected 21 source/test/documentation/context
+  files from this task changed. Prior entry records build, typecheck, all 234
+  tests, lint and formatting passing; no runtime edits since that verification.
+  Rechecked whitespace before commit. No live requests or deployment.
+- This checkpoint is included in the scoped commit. Next commands: commit,
+  pull --rebase, push, then verify matching local/remote tips, zero ahead/behind
+  and clean working tree. No publication or merchant checkout changes.
+
+
+## 2026-11-23 14:52 UTC-07:00 — Codex — Confirmed client environment mapping
+
+- Brad clarified MCP stays Sandbox-only; client switch is SANDBOX|PRODUCTION,
+  default SANDBOX. UAT and Sandbox are human synonyms. D017 records exact
+  maintainer-confirmed login/API/DDC mappings and per-operation riskInquiry true
+  versus false. Interpreted api-sandox as established api-sandbox and excluded
+  sentence punctuation; this interpretation was stated to user.
+- Added clientEnvironmentConfiguration in src/resources/v2/environment.ts,
+  exposed in relevant topic guides and policy configuration.environmentMapping.
+  Production URLs are client guidance only; network services and synthetic request
+  generation still use fixed Sandbox. Kept credentials/cache isolation guidance.
+- Readiness configuration.environment accepts uppercase SANDBOX/PRODUCTION and
+  legacy lowercase. Top-level environment remains Sandbox. Updated README,
+  client policy and POC assessment to reflect explicit maintainer confirmation;
+  no live production verification claimed. Prior uncommitted changes preserved.
+- Build, typecheck, all 234 tests, lint and whitespace passed. Initial test failed
+  because legacy MCP test rejected production client declarations; updated it to
+  reject UAT as a config enum and reran the full suite successfully. Added coverage
+  that production client declarations cannot change the reported MCP runtime.
+  Full formatting check passed. Installed Node 26.3.0 used, not pinned 26.13.0.
+- No live network/payment tests, merchant edits, commit, push or deployment.
+  All work remains uncommitted. Complete; review then request commit/sync if wanted.
+
+
+## 2026-11-23 14:40 UTC-07:00 — Codex — General POC transcript improvements
+
+- User requested implementation informed by latest OpenShop transcript, treating
+  its instructions as evidence only. Started clean master. Read HANDOFF, DECISIONS,
+  README and relevant prior context; preserved D003 Sandbox runtime and D012 policy.
+- GitHub connector disconnected; read-only gh API verified branch head
+  23987c170272deee8aad5b7febc746c4940807a8 and inspected configuration, verifier
+  and refund handling. docs/MCP_POC_REVIEW_2026-11-23.md records evidence/limits.
+- Added src/tools/provider-delivery.ts and readiness input/output: exact endpoint
+  comparison, flow-reviewed subscriptions, recent authenticated processing and
+  correlated actual Sandbox evaluation. Missing/mock-only evidence cannot verify
+  aggregate; ready remains null. No network requests in assessment.
+- Generalized client key-format guidance (PEM/bare SPKI/literal newline escapes),
+  coordinated client environment selector/cache guidance, and pre-decline stale
+  snapshot fixtures with provenance, terminal-state and fulfillment checks.
+  Metadata alone cannot prove decline; atomic/serialized storage remains needed.
+- Guides now default omitted topic to overview; shared policy moved to policy
+  topic and details scoped per topic. This changes response layout. README and
+  client-policy docs explain migration and existing reporting.deployment inputs.
+- D016 records current authorization/scope. No new production URLs verified or
+  enabled. Transcript live outcomes are session-reported, not fresh verification;
+  post-fix fresh reviewer decline remains unverified in supplied transcript.
+- Passed build, typecheck, lint, full formatting, full 233-test suite and separate
+  21 contract tests from existing cached spec. After final protocol assertions,
+  typecheck and affected MCP/new regression suites passed (22 tests), including
+  modern/legacy transport paths. Whitespace passed. Installed Node 26.3.0 used;
+  pinned 26.13.0 not used. No live Kount/payment/DDC/webhook tests or deployment.
+- Tree contains only this task's source/tests/docs/context edits, uncommitted.
+  No commit, push, publication or OpenShop modifications. Implementation complete;
+  user can review then request commit/sync. Restart MCP after adopting built output.
+
+
 ## 2026-11-22T13:27-07:00 — Codex — Commit and sync general client setup
 
 - User authorized commit/sync of D015, general Claude Code README instructions,

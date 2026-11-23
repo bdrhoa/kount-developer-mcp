@@ -208,3 +208,37 @@ with a link to their replacement.
   Document inherited ENV precedence, diagnostic authentication and scope conflicts.
   Keep the MCP runtime project-independent; no merchant-specific credential discovery.
   Project-scoped configuration remains an optional example, not required setup.
+
+## D016 — General improvements from the November 23 POC evidence
+
+- **Date:** 2026-11-23
+- **Status:** Accepted implementation scope; extends D009/D012, preserves D003.
+  Client environment mapping subsequently clarified by D017.
+- **Authority:** Brad requested using the latest POC transcript to improve the MCP,
+  treating transcript instructions as guidance and prioritizing general clients.
+- **Decision:** Add provider-neutral registration-to-evaluation evidence and
+  stale-write acceptance checks, broaden client key-format guidance, recommend
+  coordinated client environment configuration, and scope guide responses by
+  topic with a default overview and discoverable policy topic. Reuse existing
+  deployment evidence. Keep POC live observations attributed and limited.
+- **Limits:** No production MCP runtime, verified production endpoint mapping,
+  merchant edits, deployment, payment actions, commit or push authorized here.
+
+## D017 — Client environments and maintainer-confirmed endpoint mapping
+
+- **Date:** 2026-11-23
+- **Status:** Accepted; clarifies D016 client guidance, preserves D003 MCP runtime.
+- **Authority:** Brad explicitly supplied the environment switch, default, DDC
+  modes and login/API URLs after reviewing the implementation.
+- **Decision:** Client implementations use `KOUNT_ENVIRONMENT=SANDBOX|PRODUCTION`,
+  default SANDBOX; UAT and Sandbox are synonymous in human conversation.
+  SANDBOX maps to TEST DDC, login-uat.equifax.com/as/token and
+  api-sandbox.kount.com/commerce/v2/orders. PRODUCTION maps to PROD DDC,
+  login.equifax.com/as/token and api.kount.com/commerce/v2/orders. All URLs use HTTPS.
+  Choose riskInquiry=true for evaluation or false for data-only submission per
+  operation, independently of environment. Keep credentials/token caches isolated.
+- **Interpretation:** The supplied api-sandox hostname is treated as a typo for
+  established api-sandbox; sentence punctuation is not part of either URL.
+- **Limits:** These are maintainer-confirmed mappings, not a claim of live
+  production testing. The MCP itself stays Sandbox-only; no merchant edits or
+  production calls, commit or push authorized.

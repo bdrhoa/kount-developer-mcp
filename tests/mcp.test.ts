@@ -187,14 +187,33 @@ describe('MCP over actual stdio', () => {
       await client.connect(transport);
       const call = (name: string, args: Record<string, unknown>) =>
         client.callTool({ name, arguments: args });
+      expect(await call('get_integration_guide', {})).toMatchObject({
+        structuredContent: { topic: 'overview', policyTopic: 'policy' },
+      });
+      expect(await call('get_integration_guide', { topic: 'policy' })).toMatchObject({
+        structuredContent: {
+          integrationPolicy: { review: { capture: expect.stringContaining('Always capture') } },
+        },
+      });
+      expect(
+        await call('check_integration_readiness', {
+          capabilities: [],
+          providerDelivery: {
+            registeredUrl: 'https://merchant.example/a',
+            deployedUrl: 'https://merchant.example/b',
+          },
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          ready: null,
+          providerDelivery: { checks: { endpointMatch: 'failed' } },
+        },
+      });
       expect(await call('get_integration_guide', { topic: 'webhooks' })).toMatchObject({
         structuredContent: {
           webhookPolicy: { authority: 'maintainer_requested' },
           reliabilityFixtures: { scenarios: expect.any(Array) },
-          integrationPolicy: {
-            review: { capture: expect.stringContaining('Always capture') },
-            payment: { authority: 'maintainer_requested' },
-          },
+          policyTopic: 'policy',
         },
       });
       expect(
@@ -548,7 +567,7 @@ describe('MCP over actual stdio', () => {
         },
         {
           name: 'check_integration_readiness',
-          arguments: { capabilities: [], configuration: { environment: 'production' } },
+          arguments: { capabilities: [], configuration: { environment: 'UAT' } },
         },
       ]) {
         const result = await client.callTool(call);

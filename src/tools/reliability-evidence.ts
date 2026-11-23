@@ -8,6 +8,9 @@ export const reliabilityEvidence = z
       faultInjected: z.boolean().optional(),
       atomicOwnership: z.boolean().optional(),
       unknownOutcomePreserved: z.boolean().optional(),
+      terminalStatePreserved: z.boolean().optional(),
+      provenanceValidated: z.boolean().optional(),
+      fulfillmentBlocked: z.boolean().optional(),
       callbackRecovered: z.boolean().optional(),
       conflictEscalated: z.boolean().optional(),
       paymentEffectsRepeated: z.boolean().optional(),
@@ -30,6 +33,9 @@ export function assessReliability(input: z.infer<typeof reliabilityEvidence>) {
               : e?.callbackRecovered;
       const values = [
         e?.faultInjected,
+        ...(scenario === 'refund_callback_reads_pre_decline_state'
+          ? [e?.terminalStatePreserved, e?.provenanceValidated, e?.fulfillmentBlocked]
+          : []),
         specific,
         e?.paymentEffectsRepeated === undefined ? undefined : !e.paymentEffectsRepeated,
       ];
